@@ -52,7 +52,7 @@ function render(focus = true) {
   if (focus) focusScreen();
 }
 function welcome() {
-  app.innerHTML = `<section class="welcome"><p class="eyebrow">双人点餐游戏</p><h1>你以为<br>我会<span class="title-mark">点什么</span>？</h1><div class="cover-stage tray-cover" aria-hidden="true"><div class="cover-tray">${traySVG([{name:"汉堡"},{name:"薯条"},{name:"可乐"}],"","#E8C547")}<span>我想吃的</span></div><div class="cover-tray">${traySVG([{name:"麦满分"},{name:"冰淇淋"},{name:"咖啡"}],"","#70A58B")}<span>你猜的</span></div><span class="cover-star">✳</span><span class="cover-note">你真的懂我的胃吗 ↙</span><span class="cover-question">?</span></div><p class="welcome-copy">一起吃过那么多次，<br>这次能猜对吗？</p><button class="button" id="start">一起玩 <span class="arrow" aria-hidden="true">↗</span></button><p class="welcome-meta">2 个人 · 1 部手机 · 3–5 分钟</p></section>`;
+  app.innerHTML = `<section class="welcome"><p class="eyebrow">双人点餐游戏</p><h1 class="game-title">点头<span class="title-mark">之交</span></h1><div class="cover-stage tray-cover" aria-hidden="true"><div class="cover-tray">${traySVG([{name:"汉堡"},{name:"薯条"},{name:"可乐"}],"","#E8C547")}<span>我想吃的</span></div><div class="cover-tray">${traySVG([{name:"麦满分"},{name:"冰淇淋"},{name:"咖啡"}],"","#70A58B")}<span>你猜的</span></div><span class="cover-star">✳</span><span class="cover-note">这一口，你懂我吗 ↙</span><span class="cover-question">?</span></div><p class="welcome-copy">猜你点什么，<br>就知道有多熟。</p><button class="button" id="start">一起玩 <span class="arrow" aria-hidden="true">↗</span></button><p class="welcome-meta">2 个人 · 1 部手机 · 3–5 分钟</p></section>`;
   $('#start').onclick = () => { screen = 'setup'; render(); };
 }
 function setup() {
@@ -183,7 +183,7 @@ function reveal() {
   $('#photo-start').onclick = async () => { try { await ensurePhoto(); screen = 'photo'; render(); } catch { toast('合影工具没能载入，联网后再试。游戏结果仍然保留。'); } };
   $('#replay').onclick = () => $('#replay-dialog').showModal();
   $('#copy-menu').onclick = async () => {
-    const text = `${game.snapshot.store.name}\n${game.snapshot.store.address||''}\n${outcome.map(r => { const q = quoteResult?.quotes.find(q => q.id === r.actual.id); return `${r.name}：${r.actual.orders?purchaseSummary(r.actual)+'\n组成：':''}${describeItems(r.actual.items)}\n${q?.available === true ? `整盘核价 ${money(q.price)}` : `${r.actual.estimated ? '搭配估算' : '开局参考价'} ${money(r.actual.price)}`}`; }).join('\n\n')}\n${conditions.join('\n')}\nhttps://sanliang.online/lab/play/guess-my-order/`;
+    const text = `点头之交 · 今日餐单\n${game.snapshot.store.name}\n${game.snapshot.store.address||''}\n${outcome.map(r => { const q = quoteResult?.quotes.find(q => q.id === r.actual.id); return `${r.name}：${r.actual.orders?purchaseSummary(r.actual)+'\n组成：':''}${describeItems(r.actual.items)}\n${q?.available === true ? `整盘核价 ${money(q.price)}` : `${r.actual.estimated ? '搭配估算' : '开局参考价'} ${money(r.actual.price)}`}`; }).join('\n\n')}\n${conditions.join('\n')}\nhttps://sanliang.online/lab/play/guess-my-order/`;
     await copy(text);
   };
   $('#reprice').onclick = async () => {

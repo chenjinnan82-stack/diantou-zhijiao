@@ -154,7 +154,7 @@ export function createPhoto({ game, toast }) {
       const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1620;
       const ctx = canvas.getContext('2d'); ctx.fillStyle = PAPER; ctx.fillRect(0, 0, 1080, 1620);
       ctx.fillStyle = INK; ctx.textBaseline = 'top'; ctx.textAlign = 'center'; ctx.font = '28px Xiaolai, sans-serif'; ctx.fillText('今天这一餐 · 双人留念', 540, 38);
-      ctx.font = '58px Xiaolai, sans-serif'; ctx.fillText('你以为我会点什么？', 540, 80);
+      ctx.font = '58px Xiaolai, sans-serif'; ctx.fillText('点头之交', 540, 80);
       ctx.font = '23px sans-serif'; ctx.fillText(new Date(game.snapshot.createdAt).toLocaleDateString('zh-CN').replaceAll('/', ' . '), 540, 153);
       if(source){await Promise.all(hats.map((hat,i)=>art(headwearSVG(choices[i][hat.item]?.name||'餐盒'))));paperRect(ctx,65,197,950,998,'#F4F0E4');drawPhoto(ctx,84.1,216,911.8,970);}
       else {const left=await art(mealSVG(outcome[0].actual.items)),right=await art(mealSVG(outcome[1].actual.items));ctx.drawImage(left,80,300,450,360);ctx.drawImage(right,550,600,450,360);}
@@ -172,22 +172,22 @@ export function createPhoto({ game, toast }) {
         block(ctx,r.exact?'一猜就中！':matched.length?matched.join('、')+'猜中了':'这盘，还没猜着',x+16,1471,440,27,23,'Xiaolai,sans-serif');
       }
       ctx.textAlign = 'center'; ctx.font = '21px sans-serif'; ctx.fillStyle = INK; ctx.fillText('sanliang.online/lab/play/guess-my-order/', 540, 1530);
-      ctx.font = '23px Xiaolai,sans-serif'; ctx.fillText('好好吃饭，顺便猜猜。', 540, 1570);
+      ctx.font = '23px Xiaolai,sans-serif'; ctx.fillText('从点头之交，到懂你的胃。', 540, 1570);
       if (game.snapshot.demo) { ctx.fillStyle = '#B69ACA'; ctx.fillRect(0, 0, 1080, 28); ctx.fillStyle = INK; ctx.font = '17px sans-serif'; ctx.fillText('开发测试餐单 · 不代表真实可售商品或价格', 540, 4); }
       const blob = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('图片导出失败，请重试。')), 'image/png'));
       canvas.width = 0; canvas.height = 0;
       if (version !== imageVersion) return;
-      clearOutput(); outputFile = new File([blob], '你以为我会点什么.png', { type: 'image/png' }); outputURL = URL.createObjectURL(blob);
+      clearOutput(); outputFile = new File([blob], '点头之交.png', { type: 'image/png' }); outputURL = URL.createObjectURL(blob);
       mode = 'preview'; if (active) { preview(); window.scrollTo({ top: 0, behavior: 'instant' }); }
     } catch (err) { error(err.message || '图片没能生成，照片和取景仍然保留，可以重试。'); if (button) { button.disabled = false; button.textContent = source ? '重新生成大头贴' : '重试生成餐盘卡'; } }
     finally { busy = false; }
   }
   function preview() {
-    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="你以为我会点什么.png">保存图片</a>${navigator.canShare?.({files:[outputFile]})?'<button id="share-image" class="button secondary">分享</button>':''}</div><div class="button-row"><button id="edit-photo" class="text-button">${source ? '编辑' : '加合照'}</button><button id="photo-back" class="text-button">返回结果</button></div><p id="save-status" class="fine save-status" role="status"></p><button id="save-help" class="text-button" hidden>没有保存？查看保存方式</button><div id="photo-error" role="alert"></div><details><summary>更多</summary><button id="copy-link" class="text-button">复制链接</button><a href="${outputURL}" target="_blank" rel="noopener">打开原图</a></details></div>`;
+    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="点头之交.png">保存图片</a>${navigator.canShare?.({files:[outputFile]})?'<button id="share-image" class="button secondary">分享</button>':''}</div><div class="button-row"><button id="edit-photo" class="text-button">${source ? '编辑' : '加合照'}</button><button id="photo-back" class="text-button">返回结果</button></div><p id="save-status" class="fine save-status" role="status"></p><button id="save-help" class="text-button" hidden>没有保存？查看保存方式</button><div id="photo-error" role="alert"></div><details><summary>更多</summary><button id="copy-link" class="text-button">复制邀请</button><a href="${outputURL}" target="_blank" rel="noopener">打开原图</a></details></div>`;
     const showSave=()=>{
       let dialog=$('#save-dialog');if(dialog){dialog.showModal();return;}
       dialog=document.createElement('dialog');dialog.id='save-dialog';dialog.className='save-dialog';
-      dialog.innerHTML=`<button type="button" class="text-button" data-close>关闭</button><h2>保存这张合照</h2><p>长按图片，选择“保存图片”或“添加到照片”。</p><img src="${outputURL}" width="1080" height="1620" alt="长按保存合照"><p class="fine" role="status">图片已准备好，保存需在手机菜单中完成。</p><a class="button secondary full" href="${outputURL}" download="你以为我会点什么.png">下载图片</a>`;
+      dialog.innerHTML=`<button type="button" class="text-button" data-close>关闭</button><h2>保存这张合照</h2><p>长按图片，选择“保存图片”或“添加到照片”。</p><img src="${outputURL}" width="1080" height="1620" alt="长按保存合照"><p class="fine" role="status">图片已准备好，保存需在手机菜单中完成。</p><a class="button secondary full" href="${outputURL}" download="点头之交.png">下载图片</a>`;
       const reader=new FileReader();reader.onload=()=>{if(dialog.isConnected)dialog.querySelector('img').src=reader.result;};reader.readAsDataURL(outputFile);
       container.append(dialog);dialog.querySelector('[data-close]').onclick=()=>dialog.close();dialog.querySelector('a').onclick=()=>{dialog.querySelector('[role=status]').textContent='已发起下载；若没有弹出保存选项，请长按上方图片。';};dialog.showModal();
     };
@@ -202,12 +202,12 @@ export function createPhoto({ game, toast }) {
     $('#photo-back').onclick = back;
     if($('#share-image'))$('#share-image').onclick = async () => {
       try {
-        if (navigator.canShare?.({ files: [outputFile] })) await navigator.share({ files: [outputFile], title: '你以为我会点什么' });
+        if (navigator.canShare?.({ files: [outputFile] })) await navigator.share({ files: [outputFile], title: '点头之交', text: '猜你点什么，就知道有多熟。来猜猜我的这一餐！' });
         else { toast('请保存图片后分享给朋友；也可以长按上方图片。'); $('#save-image').focus(); }
       } catch (err) { if (err.name !== 'AbortError') error('系统分享没能打开，可以直接保存图片。'); }
     };
     $('#copy-link').onclick = async () => {
-      try { await navigator.clipboard.writeText('https://sanliang.online/lab/play/guess-my-order/'); toast('游戏链接已复制。'); }
+      try { await navigator.clipboard.writeText('点头之交｜猜你点什么，就知道有多熟。\nhttps://sanliang.online/lab/play/guess-my-order/'); toast('邀请文案已复制。'); }
       catch { error('请复制：sanliang.online/lab/play/guess-my-order/'); }
     };
   }

@@ -61,3 +61,5 @@ body.in-game .wordmark{visibility:hidden}.catalog-selection.configuring .action-
 .page:has(.photo-heading)>.masthead{display:none}.photo-heading{padding:8px 0}.photo-heading h1{font-size:22px;margin:0}.save-status:empty{display:none}.save-status{margin:8px 0;text-align:center}.save-dialog{padding:14px 16px 20px;max-width:430px}.save-dialog>[data-close]{float:right}.save-dialog h2{font-size:23px;margin:10px 0}.save-dialog img{display:block;width:100%;height:auto;margin:12px 0;user-select:auto;-webkit-touch-callout:default}.save-dialog p{font-size:13px;margin:8px 0}.save-dialog::backdrop{background:#25231fb3}
 
 #about{display:none}body.in-game .masthead{display:none}
+
+.welcome .game-title{font-size:clamp(56px,10vw,86px);letter-spacing:.02em;line-height:1.2}.welcome .game-title .title-mark{margin-left:.12em}

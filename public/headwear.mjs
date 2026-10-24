@@ -18,3 +18,23 @@ export function photoTransform(sw,sh,w,h,fit,zoom,ox,oy){
  const x=clamp(ox,Math.abs(w-sw*scale)/2),y=clamp(oy,Math.abs(h-sh*scale)/2);
  return {scale,x:(w-sw*scale)/2+x,y:(h-sh*scale)/2+y,ox:x,oy:y};
 }
+
+// Points use source-image pixels so gestures remain stable through photo zoom/crop.
+export function moveHeadwear(hat,start,now,width,height){
+ const mid=points=>points.reduce((p,q)=>({x:p.x+q.x/points.length,y:p.y+q.y/points.length}),{x:0,y:0});
+ const a=mid(start),b=mid(now);let ratio=1,turn=0;
+ if(start.length===2&&now.length===2){
+  const dx=start[1].x-start[0].x,dy=start[1].y-start[0].y,d=Math.hypot(dx,dy);
+  if(d<4)return {...hat};
+  ratio=Math.max(.1,Math.min(1.5,hat.size*Math.hypot(now[1].x-now[0].x,now[1].y-now[0].y)/d))/hat.size;
+  turn=Math.atan2(now[1].y-now[0].y,now[1].x-now[0].x)-Math.atan2(dy,dx);
+ }
+ const x=hat.x*width-a.x,y=hat.y*height-a.y;
+ return {...hat,x:(b.x+ratio*(x*Math.cos(turn)-y*Math.sin(turn)))/width,y:(b.y+ratio*(x*Math.sin(turn)+y*Math.cos(turn)))/height,size:hat.size*ratio,angle:((hat.angle+turn*180/Math.PI+540)%360)-180};
+}
+export function hitHeadwear(hat,point,width,height){
+ if(!hat.visible)return false;
+ const angle=-hat.angle*Math.PI/180,dx=point.x-hat.x*width,dy=point.y-hat.y*height,size=hat.size*width;
+ const x=dx*Math.cos(angle)-dy*Math.sin(angle),y=dx*Math.sin(angle)+dy*Math.cos(angle);
+ return Math.abs(x)<=size/2&&y>=-size*135/240&&y<=size*105/240;
+}

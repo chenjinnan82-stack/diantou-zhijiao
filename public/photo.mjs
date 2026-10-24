@@ -1,4 +1,4 @@
-import { headwearSVG, photoTransform } from './headwear.mjs';
+import { headwearSVG, photoTransform, moveHeadwear, hitHeadwear } from './headwear.mjs';
 import { results, describeItems, purchaseSummary, escapeHTML as e } from './game.mjs';
 import { foodSVG, mealSVG, envelopeSVG } from './art.mjs';
 const W = 940, H = 1000, PAPER = '#E5E0D2', INK = '#25231F';
@@ -23,7 +23,7 @@ function block(ctx, text, x, y, width, height, max = 28, family = 'sans-serif') 
 function paperRect(ctx, x, y, w, h, fill) { ctx.fillStyle = fill; ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill(); ctx.stroke(); ctx.fillStyle = INK; }
 
 export function createPhoto({ game, toast }) {
-  let container, back, source, outputURL, outputFile, zoom = 1, offsetX = 0, offsetY = 0, mode = 'choose', busy = false, drag, imageVersion = 0, active = true;
+  let container, back, source, outputURL, outputFile, zoom = 1, offsetX = 0, offsetY = 0, mode = 'choose', busy = false, imageVersion = 0, active = true;
   const outcome = results(game), cache = new Map();
   let worker, detectionTimer, faces=[], activeHead=-1, fit=true, retro=true, touched=false;
   const choices=outcome.map(r=>r.actual.items);
@@ -122,9 +122,24 @@ export function createPhoto({ game, toast }) {
     $('#fit').onclick = () => { zoom = 1; offsetX = 0; offsetY = 0; $('#zoom').value = 1; drawCrop(); };
     $('#reselect').onclick = () => $('#gallery-input').click(); $('#generate').onclick = generate;
     const canvas = $('#crop');
-    canvas.onpointerdown = event => { if(drag||event.button!==0)return;touched=true;drag={x:event.clientX,y:event.clientY,pointer:event.pointerId,moved:false};canvas.setPointerCapture(event.pointerId); };
-    canvas.onpointermove = event => { if(!drag||drag.pointer!==event.pointerId)return;if(!drag.moved&&Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<4)return;const rect=canvas.getBoundingClientRect();if(activeHead>=0){const t=photoTransform(source.width,source.height,W,H,fit,zoom,offsetX,offsetY);hats[activeHead].x+=(event.clientX-drag.x)*W/rect.width/(source.width*t.scale);hats[activeHead].y+=(event.clientY-drag.y)*H/rect.height/(source.height*t.scale);}else{offsetX+=(event.clientX-drag.x)*W/rect.width;offsetY+=(event.clientY-drag.y)*H/rect.height;}drag={x:event.clientX,y:event.clientY,pointer:event.pointerId,moved:true};clampOffset();drawCrop(); };
-    canvas.onpointerup = canvas.onpointercancel = canvas.onlostpointercapture = event => { if(drag?.pointer===event.pointerId)drag = null; };
+    const pointers=new Map();let gesture;
+    const point=event=>{const r=canvas.getBoundingClientRect(),t=photoTransform(source.width,source.height,W,H,fit,zoom,offsetX,offsetY);return {x:((event.clientX-r.left)*W/r.width-t.x)/t.scale,y:((event.clientY-r.top)*H/r.height-t.y)/t.scale};};
+    const rebase=()=>{gesture=pointers.size?{start:[...pointers.values()].map(p=>({...p})),moved:false,hat:activeHead>=0?{...hats[activeHead]}:null,ox:offsetX,oy:offsetY}:null;};
+    canvas.onpointerdown=event=>{
+      if(event.button!==0||pointers.size>=2)return;touched=true;
+      const p=point(event);
+      if(!pointers.size){activeHead=[1,0].find(i=>hitHeadwear(hats[i],p,source.width,source.height))??-1;hatOptions();}
+      pointers.set(event.pointerId,p);rebase();canvas.setPointerCapture(event.pointerId);
+    };
+    canvas.onpointermove=event=>{
+      if(!pointers.has(event.pointerId)||!gesture)return;
+      pointers.set(event.pointerId,point(event));const now=[...pointers.values()];
+      if(now.length===1&&!gesture.moved){const t=photoTransform(source.width,source.height,W,H,fit,zoom,offsetX,offsetY);if(Math.hypot(now[0].x-gesture.start[0].x,now[0].y-gesture.start[0].y)*t.scale*canvas.getBoundingClientRect().width/W<4)return;}gesture.moved=true;
+      if(activeHead>=0){Object.assign(hats[activeHead],moveHeadwear(gesture.hat,gesture.start,now,source.width,source.height));$('#hat-size').value=hats[activeHead].size;$('#hat-angle').value=hats[activeHead].angle;}
+      else if(now.length===1){const t=photoTransform(source.width,source.height,W,H,fit,zoom,gesture.ox,gesture.oy);offsetX=gesture.ox+(now[0].x-gesture.start[0].x)*t.scale;offsetY=gesture.oy+(now[0].y-gesture.start[0].y)*t.scale;clampOffset();pointers.set(event.pointerId,point(event));rebase();}
+      drawCrop();
+    };
+    canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=event=>{if(pointers.delete(event.pointerId))rebase();};
     const nudge = key => { if(activeHead>=0){touched=true;hats[activeHead].x+=key==='left'?-.01:key==='right'?.01:0;hats[activeHead].y+=key==='up'?-.01:key==='down'?.01:0;drawCrop();return;} if (key === 'left') offsetX -= 20; if (key === 'right') offsetX += 20; if (key === 'up') offsetY -= 20; if (key === 'down') offsetY += 20; clampOffset(); drawCrop(); };
     document.querySelectorAll('[data-nudge]').forEach(b => b.onclick = () => nudge(b.dataset.nudge));
     canvas.onkeydown = event => { const key = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }[event.key]; if (key) { event.preventDefault(); nudge(key); } };

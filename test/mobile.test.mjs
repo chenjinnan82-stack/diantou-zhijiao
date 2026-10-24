@@ -40,31 +40,25 @@ test('cancelled combo loads cannot replace the next editor',async()=>{
  assert.equal(run(next,first),undefined);assert.equal(run(null,first),undefined);assert.equal(run(next,next),'render');
 });
 
-test('headwear tap preserves position; dragging follows finger delta without snapping',async()=>{
+test('direct headwear selection and pinch preserve anchors across finger transitions',async()=>{
  const {readFile}=await import('node:fs/promises');const {runInNewContext}=await import('node:vm');
+ const {moveHeadwear,hitHeadwear}=await import('../public/headwear.mjs');
  const source=await readFile(new URL('../public/photo.mjs',import.meta.url),'utf8');
- const handlers=source.slice(source.indexOf('    canvas.onpointerdown ='),source.indexOf('    const nudge ='));
- const ctx={canvas:{setPointerCapture(){},getBoundingClientRect:()=>({width:470,height:500})},drag:null,touched:false,activeHead:0,hats:[{x:.3,y:.4}],source:{width:940,height:1000},W:940,H:1000,fit:true,zoom:1,offsetX:0,offsetY:0,photoTransform:()=>({scale:1}),clampOffset(){},drawCrop(){}};
+ const handlers=source.slice(source.indexOf('    const pointers=new Map()'),source.indexOf('    const nudge ='));
+ const hats=[{x:.3,y:.4,size:.28,angle:0,visible:true},{x:.8,y:.7,size:.2,angle:0,visible:true}];
+ const ctx={canvas:{setPointerCapture(){},getBoundingClientRect:()=>({left:0,top:0,width:940,height:1000})},touched:false,activeHead:-1,hats,source:{width:940,height:1000},W:940,H:1000,fit:true,zoom:1,offsetX:0,offsetY:0,photoTransform,moveHeadwear,hitHeadwear,clampOffset(){},drawCrop(){},hatOptions(){},$:()=>({value:0})};
  runInNewContext(handlers,ctx);const ev=(x,y,id=1)=>({clientX:x,clientY:y,pointerId:id,button:0});
- ctx.canvas.onpointerdown(ev(300,300));assert.deepEqual(ctx.hats[0],{x:.3,y:.4});
- ctx.canvas.onpointermove(ev(302,300));assert.equal(ctx.hats[0].x,.3);
- ctx.canvas.onpointermove(ev(320,310,2));assert.equal(ctx.hats[0].x,.3);
- ctx.canvas.onpointermove(ev(320,310));assert.ok(Math.abs(ctx.hats[0].x-(.3+40/940))<1e-10);assert.ok(Math.abs(ctx.hats[0].y-.42)<1e-10);
- ctx.canvas.onpointerup(ev(320,310,2));assert.notEqual(ctx.drag,null);
- ctx.canvas.onpointerup(ev(320,310));assert.equal(ctx.drag,null);
-});
-
-test('headwear movement uses displayed-photo scale at phone widths and preserves rotation/size',async()=>{
- const {readFile}=await import('node:fs/promises');const {runInNewContext}=await import('node:vm');
- const text=await readFile(new URL('../public/photo.mjs',import.meta.url),'utf8');
- const handlers=text.slice(text.indexOf('    canvas.onpointerdown ='),text.indexOf('    const nudge ='));
- for(const [sw,sh] of [[1600,900],[900,1600]])for(const width of [320,375,390,430])for(const fit of [true,false])for(const zoom of [1,2,4])for(const angle of [-90,0,135]){
-  const ctx={canvas:{setPointerCapture(){},getBoundingClientRect:()=>({width,height:width*1000/940})},drag:null,touched:false,activeHead:0,hats:[{x:.3,y:.4,size:.28,angle}],source:{width:sw,height:sh},W:940,H:1000,fit,zoom,offsetX:100,offsetY:-100,photoTransform,clampOffset(){},drawCrop(){}};
-  runInNewContext(handlers,ctx);const ev=(x,y)=>({clientX:x,clientY:y,pointerId:1,button:0});
-  ctx.canvas.onpointerdown(ev(50,50));ctx.canvas.onpointermove(ev(70,80));
-  const t=photoTransform(sw,sh,940,1000,fit,zoom,100,-100),hat=ctx.hats[0];
-  assert.ok(Math.abs((hat.x-.3)*sw*t.scale*width/940-20)<1e-8);
-  assert.ok(Math.abs((hat.y-.4)*sh*t.scale*width/940-30)<1e-8);
-  assert.equal(hat.angle,angle);assert.equal(hat.size,.28);
+ ctx.canvas.onpointerdown(ev(250,400));assert.equal(ctx.activeHead,0);assert.equal(hats[0].x,.3);
+ ctx.canvas.onpointermove(ev(270,400));assert.ok(Math.abs(hats[0].x-(.3+20/940))<1e-10);
+ ctx.canvas.onpointerdown(ev(350,400,2));const before={...hats[0]};
+ ctx.canvas.onpointermove(ev(350,480,2));assert.ok(hats[0].size>before.size);assert.ok(Math.abs(hats[0].angle-45)<1e-10);
+ ctx.canvas.onpointerup(ev(350,480,2));const after={...hats[0]};ctx.canvas.onpointermove(ev(270,400));assert.deepEqual(hats[0],after);
+ ctx.canvas.onpointermove(ev(280,400));assert.ok(Math.abs(hats[0].x-after.x-10/940)<1e-10);assert.equal(hats[0].angle,after.angle);
+ ctx.canvas.onpointercancel(ev(280,400));ctx.canvas.onpointermove(ev(500,500));assert.equal(hats[0].angle,after.angle);
+ ctx.canvas.onpointerdown(ev(752,700));assert.equal(ctx.activeHead,1);ctx.canvas.onpointerup(ev(752,700));
+ for(const [width,height] of [[1600,900],[900,1600]])for(const angle of [-90,0,135]){
+  const h={x:.3,y:.4,size:.28,angle,visible:true},p={x:h.x*width,y:h.y*height};assert.ok(hitHeadwear(h,p,width,height));
+  const moved=moveHeadwear(h,[p],[{x:p.x+20,y:p.y+30}],width,height);assert.ok(Math.abs((moved.x-h.x)*width-20)<1e-8);assert.ok(Math.abs((moved.y-h.y)*height-30)<1e-8);assert.equal(moved.size,h.size);assert.equal(moved.angle,angle);
+  const unchanged=moveHeadwear(h,[p,{x:p.x+100,y:p.y}],[p,{x:p.x+100,y:p.y}],width,height);assert.ok(Math.abs(unchanged.x-h.x)<1e-10);assert.ok(Math.abs(unchanged.y-h.y)<1e-10);
  }
 });

@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "private": true,
   "type": "module",
-  "description": "一部手机，两个人，猜猜你会点什么。",
+  "description": "两个人，一部手机。用真实麦当劳菜单搭餐、猜朋友、留合影。",
   "engines": {
     "node": ">=22.9"
   },

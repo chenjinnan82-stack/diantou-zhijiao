@@ -107,3 +107,21 @@ test('production without token never returns development meals', async t => {
   const response = await fetch(`http://127.0.0.1:${app.server.address().port}${BASE}api/stores`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ city: '上海', query: '人民广场' }) });
   assert.equal(response.status, 503); assert.equal((await response.json()).error.code, 'UNCONFIGURED');
 });
+
+test('public HTTP never exposes credentials, private files or raw upstream errors', async t => {
+  const secret = 'synthetic-private-value-for-test';
+  const app = createApp({ token: secret, mapKey: secret, locate: async () => { throw new Error(`upstream rejected ${secret}`); }, log: false });
+  app.server.listen(0, '127.0.0.1'); await once(app.server, 'listening'); t.after(() => app.close());
+  const base = `http://127.0.0.1:${app.server.address().port}${BASE}`;
+  for (const path of ['.env', '.git/config', 'server.mjs', 'mcp.mjs', 'package-lock.json', 'qa/private/live-evidence.json', '%2e%2e%2f.env']) {
+    const response = await fetch(base + path);
+    assert.equal(response.status, 404, path);
+    assert.equal((await response.text()).includes(secret), false);
+  }
+  const health = await fetch(base + 'api/health');
+  assert.equal((await health.text()).includes(secret), false);
+  const response = await fetch(base + 'api/places', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ city: '上海', query: '人民广场' }) });
+  assert.equal(response.status, 500);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await response.json(), { error: { code: 'SERVER', message: '服务暂时开小差了，请重试。' } });
+});

@@ -8,6 +8,7 @@ Nginx HTTPS 站点中的示例：
 location /lab/play/guess-my-order/ {
     proxy_pass http://127.0.0.1:18426;
     proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
 }
 ```

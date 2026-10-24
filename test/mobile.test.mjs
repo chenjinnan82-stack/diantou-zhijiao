@@ -39,3 +39,16 @@ test('cancelled combo loads cannot replace the next editor',async()=>{
  const run=(editing,request)=>runInNewContext(`(()=>{${guard}return 'render';})()`,{alive:true,editing,request});
  assert.equal(run(next,first),undefined);assert.equal(run(null,first),undefined);assert.equal(run(next,next),'render');
 });
+
+test('headwear tap preserves position; dragging follows finger delta without snapping',async()=>{
+ const {readFile}=await import('node:fs/promises');const {runInNewContext}=await import('node:vm');
+ const source=await readFile(new URL('../public/photo.mjs',import.meta.url),'utf8');
+ const handlers=source.slice(source.indexOf('    canvas.onpointerdown ='),source.indexOf('    const nudge ='));
+ const ctx={canvas:{setPointerCapture(){},getBoundingClientRect:()=>({width:470,height:500})},drag:null,touched:false,activeHead:0,hats:[{x:.3,y:.4}],source:{width:940,height:1000},W:940,H:1000,fit:true,zoom:1,offsetX:0,offsetY:0,photoTransform:()=>({scale:1}),clampOffset(){},drawCrop(){}};
+ runInNewContext(handlers,ctx);const ev=(x,y,id=1)=>({clientX:x,clientY:y,pointerId:id,button:0});
+ ctx.canvas.onpointerdown(ev(300,300));assert.deepEqual(ctx.hats[0],{x:.3,y:.4});
+ ctx.canvas.onpointermove(ev(302,300));assert.equal(ctx.hats[0].x,.3);
+ ctx.canvas.onpointermove(ev(320,310,2));assert.equal(ctx.hats[0].x,.3);
+ ctx.canvas.onpointermove(ev(320,310));assert.ok(Math.abs(ctx.hats[0].x-(.3+40/940))<1e-10);assert.ok(Math.abs(ctx.hats[0].y-.42)<1e-10);
+ ctx.canvas.onpointerup();assert.equal(ctx.drag,null);
+});

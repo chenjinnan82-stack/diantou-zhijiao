@@ -53,3 +53,6 @@ body.in-game .wordmark{visibility:hidden}.catalog-selection.configuring .action-
 }
 @media(max-width:699px) and (min-height:650px){.catalog-builder{align-items:stretch}.catalog-counter{height:100%;overflow:hidden}.catalog-scroll,.catalog-editor{flex:1 1 0;overflow-y:auto}}
 .page:has(.catalog-selection)>.masthead{display:none}.catalog-selection .screen-head{padding-top:12px}
+
+/* Compact receipt: keep prices separate from long meal descriptions. */
+.reference-content .receipt-row{display:block;padding:16px 0}.reference-content .receipt-row>.price{display:flex;align-items:baseline;justify-content:flex-end;gap:8px;margin-top:8px}.reference-content .receipt-row p{margin:8px 0}.reference-content .button-row{margin:20px 0 14px}.receipt-note{margin:12px 0}.price-conditions>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;text-decoration:underline}.price-conditions p{margin:0 0 12px}.reference-content>h3{margin:20px 0 8px}

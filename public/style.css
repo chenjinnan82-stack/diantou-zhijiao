@@ -56,3 +56,6 @@ body.in-game .wordmark{visibility:hidden}.catalog-selection.configuring .action-
 
 /* Compact receipt: keep prices separate from long meal descriptions. */
 .reference-content .receipt-row{display:block;padding:16px 0}.reference-content .receipt-row>.price{display:flex;align-items:baseline;justify-content:flex-end;gap:8px;margin-top:8px}.reference-content .receipt-row p{margin:8px 0}.reference-content .button-row{margin:20px 0 14px}.receipt-note{margin:12px 0}.price-conditions>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;text-decoration:underline}.price-conditions p{margin:0 0 12px}.reference-content>h3{margin:20px 0 8px}
+
+/* Photo workspace: spend the screen on the photograph, not repeated headings. */
+.page:has(.photo-heading)>.masthead{display:none}.photo-heading{padding:8px 0}.photo-heading h1{font-size:22px;margin:0}.save-status:empty{display:none}.save-status{margin:8px 0;text-align:center}.save-dialog{padding:14px 16px 20px;max-width:430px}.save-dialog>[data-close]{float:right}.save-dialog h2{font-size:23px;margin:10px 0}.save-dialog img{display:block;width:100%;height:auto;margin:12px 0;user-select:auto;-webkit-touch-callout:default}.save-dialog p{font-size:13px;margin:8px 0}.save-dialog::backdrop{background:#25231fb3}

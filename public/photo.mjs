@@ -153,14 +153,26 @@ export function createPhoto({ game, toast }) {
       stopDetection();await document.fonts.load('48px Xiaolai');
       const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1620;
       const ctx = canvas.getContext('2d'); ctx.fillStyle = PAPER; ctx.fillRect(0, 0, 1080, 1620);
-      ctx.fillStyle = INK; ctx.textBaseline = 'top'; ctx.textAlign = 'center'; ctx.font = '28px Xiaolai, sans-serif'; ctx.fillText('双人点餐游戏', 540, 43);
-      ctx.font = '68px Xiaolai, sans-serif'; ctx.fillText('你以为我会点什么？', 540, 99);
-      ctx.font = '23px sans-serif'; ctx.fillText(new Date(game.snapshot.createdAt).toLocaleDateString('zh-CN').replaceAll('/', ' . '), 540, 194);
-      if(source){await Promise.all(hats.map((hat,i)=>art(headwearSVG(choices[i][hat.item]?.name||'餐盒'))));paperRect(ctx,51,234,978,1038,'#F4F0E4');drawPhoto(ctx,70,252,W,H);}
+      ctx.fillStyle = INK; ctx.textBaseline = 'top'; ctx.textAlign = 'center'; ctx.font = '28px Xiaolai, sans-serif'; ctx.fillText('今天这一餐 · 双人留念', 540, 38);
+      ctx.font = '58px Xiaolai, sans-serif'; ctx.fillText('你以为我会点什么？', 540, 80);
+      ctx.font = '23px sans-serif'; ctx.fillText(new Date(game.snapshot.createdAt).toLocaleDateString('zh-CN').replaceAll('/', ' . '), 540, 153);
+      if(source){await Promise.all(hats.map((hat,i)=>art(headwearSVG(choices[i][hat.item]?.name||'餐盒'))));paperRect(ctx,65,197,950,998,'#F4F0E4');drawPhoto(ctx,84.1,216,911.8,970);}
       else {const left=await art(mealSVG(outcome[0].actual.items)),right=await art(mealSVG(outcome[1].actual.items));ctx.drawImage(left,80,300,450,360);ctx.drawImage(right,550,600,450,360);}
-      outcome.forEach((r,i)=>{const x=i?555:51;paperRect(ctx,x,1290,474,188,i?'#70A58B':'#E8C547');ctx.textAlign='left';block(ctx,r.name,x+18,1305,438,35,29);block(ctx,choices[i][hats[i].item]?.name||'',x+18,1350,438,50,24);block(ctx,r.exact?'整份猜中！':r.groups.some(g=>g.match)?r.groups.filter(g=>g.match).map(g=>g.label).join('、')+'猜中':'这次没猜中',x+18,1418,438,40,23);});
-      ctx.textAlign = 'center'; ctx.font = '21px sans-serif'; ctx.fillStyle = INK; ctx.fillText('sanliang.online/lab/play/guess-my-order/', 540, 1514);
-      ctx.font = '23px Xiaolai,sans-serif'; ctx.fillText('好好吃饭，顺便猜猜。', 540, 1554);
+      for(const [i,r] of outcome.entries()){
+        const x=i?555:51,color=i?'#70A58B':'#E8C547';
+        paperRect(ctx,x,1215,474,288,'#F4F0E4');paperRect(ctx,x,1215,474,52,color);
+        ctx.textAlign='left';block(ctx,r.name+' 的餐票',x+16,1225,440,36,32,'Xiaolai,sans-serif');
+        ctx.font='18px sans-serif';ctx.fillText('我点的',x+16,1281);
+        block(ctx,r.actual.orders?.map(o=>o.name).join('、')||describeItems(r.actual.items),x+16,1307,440,55,22);
+        ctx.setLineDash([5,6]);ctx.beginPath();ctx.moveTo(x+16,1371);ctx.lineTo(x+458,1371);ctx.stroke();ctx.setLineDash([]);
+        block(ctx,r.friend+' 猜我点',x+16,1382,440,27,19);
+        block(ctx,r.guess.orders?.map(o=>o.name).join('、')||describeItems(r.guess.items),x+16,1410,440,43,20);
+        ctx.fillStyle=color;ctx.fillRect(x+1,1462,472,40);ctx.fillStyle=INK;
+        const matched=r.groups.filter(g=>g.match).map(g=>g.label);
+        block(ctx,r.exact?'一猜就中！':matched.length?matched.join('、')+'猜中了':'这盘，还没猜着',x+16,1471,440,27,23,'Xiaolai,sans-serif');
+      }
+      ctx.textAlign = 'center'; ctx.font = '21px sans-serif'; ctx.fillStyle = INK; ctx.fillText('sanliang.online/lab/play/guess-my-order/', 540, 1530);
+      ctx.font = '23px Xiaolai,sans-serif'; ctx.fillText('好好吃饭，顺便猜猜。', 540, 1570);
       if (game.snapshot.demo) { ctx.fillStyle = '#B69ACA'; ctx.fillRect(0, 0, 1080, 28); ctx.fillStyle = INK; ctx.font = '17px sans-serif'; ctx.fillText('开发测试餐单 · 不代表真实可售商品或价格', 540, 4); }
       const blob = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('图片导出失败，请重试。')), 'image/png'));
       canvas.width = 0; canvas.height = 0;
@@ -171,8 +183,21 @@ export function createPhoto({ game, toast }) {
     finally { busy = false; }
   }
   function preview() {
-    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="你以为我会点什么.png">保存图片</a>${navigator.canShare?.({files:[outputFile]})?'<button id="share-image" class="button secondary">分享</button>':''}</div><div class="button-row"><button id="edit-photo" class="text-button">${source ? '编辑' : '加合照'}</button><button id="photo-back" class="text-button">返回结果</button></div><div id="photo-error" role="alert"></div><details><summary>更多</summary><button id="copy-link" class="text-button">复制链接</button><a href="${outputURL}" target="_blank" rel="noopener">打开原图</a></details></div>`;
-    $('#save-image').onclick=()=>{if(/MicroMessenger/i.test(navigator.userAgent))toast('长按图片保存');};
+    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="你以为我会点什么.png">保存图片</a>${navigator.canShare?.({files:[outputFile]})?'<button id="share-image" class="button secondary">分享</button>':''}</div><div class="button-row"><button id="edit-photo" class="text-button">${source ? '编辑' : '加合照'}</button><button id="photo-back" class="text-button">返回结果</button></div><p id="save-status" class="fine save-status" role="status"></p><button id="save-help" class="text-button" hidden>没有保存？查看保存方式</button><div id="photo-error" role="alert"></div><details><summary>更多</summary><button id="copy-link" class="text-button">复制链接</button><a href="${outputURL}" target="_blank" rel="noopener">打开原图</a></details></div>`;
+    const showSave=()=>{
+      let dialog=$('#save-dialog');if(dialog){dialog.showModal();return;}
+      dialog=document.createElement('dialog');dialog.id='save-dialog';dialog.className='save-dialog';
+      dialog.innerHTML=`<button type="button" class="text-button" data-close>关闭</button><h2>保存这张合照</h2><p>长按图片，选择“保存图片”或“添加到照片”。</p><img src="${outputURL}" width="1080" height="1620" alt="长按保存合照"><p class="fine" role="status">图片已准备好，保存需在手机菜单中完成。</p><a class="button secondary full" href="${outputURL}" download="你以为我会点什么.png">下载图片</a>`;
+      const reader=new FileReader();reader.onload=()=>{if(dialog.isConnected)dialog.querySelector('img').src=reader.result;};reader.readAsDataURL(outputFile);
+      container.append(dialog);dialog.querySelector('[data-close]').onclick=()=>dialog.close();dialog.querySelector('a').onclick=()=>{dialog.querySelector('[role=status]').textContent='已发起下载；若没有弹出保存选项，请长按上方图片。';};dialog.showModal();
+    };
+    $('#save-help').onclick=showSave;
+    $('#save-image').onclick=event=>{
+      $('#save-help').hidden=false;
+      const mobile=/Android|iPhone|iPad|iPod|MicroMessenger/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+      if(mobile){event.preventDefault();showSave();$('#save-status').textContent='请在图片菜单中完成保存。';}
+      else $('#save-status').textContent='已发起下载，请查看浏览器下载列表。';
+    };
     $('#edit-photo').onclick = () => { mode = source ? 'crop' : 'choose'; render(); };
     $('#photo-back').onclick = back;
     if($('#share-image'))$('#share-image').onclick = async () => {

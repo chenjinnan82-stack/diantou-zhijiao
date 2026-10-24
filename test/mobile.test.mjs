@@ -78,3 +78,16 @@ test('direct headwear selection and pinch preserve anchors across finger transit
   const unchanged=moveHeadwear(h,[p,{x:p.x+100,y:p.y}],[p,{x:p.x+100,y:p.y}],width,height);assert.ok(Math.abs(unchanged.x-h.x)<1e-10);assert.ok(Math.abs(unchanged.y-h.y)<1e-10);
  }
 });
+
+test('Android WeChat save opens an explicit image-saving surface instead of silent download',async()=>{
+ const {readFile}=await import('node:fs/promises');const {runInNewContext}=await import('node:vm');
+ const source=await readFile(new URL('../public/photo.mjs',import.meta.url),'utf8');
+ const handler=source.slice(source.indexOf("    $('#save-image').onclick=event=>{"),source.indexOf("    $('#edit-photo').onclick"));
+ for(const [userAgent,mobile] of [['Mozilla/5.0 Android MicroMessenger/8',true],['iPhone',true],['Desktop Chrome',false]]){
+  const nodes={};let shown=0,prevented=0;const $=id=>nodes[id]??=( {} );
+  runInNewContext(handler,{$,navigator:{userAgent,platform:'',maxTouchPoints:0},showSave:()=>shown++});
+  $('#save-image').onclick({preventDefault(){prevented++;}});
+  assert.equal(shown,mobile?1:0);assert.equal(prevented,mobile?1:0);assert.equal($('#save-help').hidden,false);
+  assert.ok($('#save-status').textContent);assert.doesNotMatch($('#save-status').textContent,/保存成功|已保存/);
+ }
+});

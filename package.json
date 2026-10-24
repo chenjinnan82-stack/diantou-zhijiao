@@ -1,0 +1,19 @@
+{
+  "name": "guess-my-order",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "一部手机，两个人，猜猜你会点什么。",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "dev": "node --watch --env-file-if-exists=.env server.mjs --demo",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.4.0"
+  },
+  "license": "MIT"
+}

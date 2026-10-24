@@ -184,7 +184,19 @@ export function createPhoto({ game, toast }) {
     finally { busy = false; }
   }
   function preview() {
-    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="点头之交.png">保存图片</a>${navigator.canShare?.({files:[outputFile]})?'<button id="share-image" class="button secondary">分享</button>':''}</div><div class="button-row"><button id="edit-photo" class="text-button">${source ? '编辑' : '加合照'}</button><button id="photo-back" class="text-button">返回结果</button></div><p id="save-status" class="fine save-status" role="status"></p><button id="save-help" class="text-button" hidden>没有保存？查看保存方式</button><div id="photo-error" role="alert"></div><div class="invite-actions"><button id="copy-link" class="button secondary">喊朋友来玩 ↗</button><a class="text-button" href="${outputURL}" target="_blank" rel="noopener">查看大图</a></div></div>`;
+    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="点头之交.png">保存图片</a>${navigator.canShare?.({files:[outputFile]})?'<button id="share-image" class="button secondary">分享</button>':''}</div><div class="button-row"><button id="edit-photo" class="text-button">${source ? '编辑' : '加合照'}</button><button id="photo-back" class="text-button">返回结果</button></div><p id="save-status" class="fine save-status" role="status"></p><button id="save-help" class="text-button" hidden>没有保存？查看保存方式</button><div id="photo-error" role="alert"></div><div class="invite-actions"><button id="copy-link" class="button secondary">喊朋友来玩 ↗</button><button type="button" id="view-image" class="text-button">查看大图</button></div></div>`;
+    $('#view-image').onclick=()=>{
+      let dialog=$('#image-viewer');
+      if(!dialog){
+        dialog=document.createElement('dialog');dialog.id='image-viewer';dialog.className='image-viewer';dialog.setAttribute('aria-label','合影大图');
+        dialog.innerHTML=`<div class="viewer-toolbar"><button type="button" class="text-button" data-zoom aria-pressed="false">放大</button><button type="button" class="text-button" data-close autofocus>关闭</button></div><div class="viewer-scroll"><img src="${outputURL}" width="1080" height="1620" alt="合影大图"></div>`;
+        container.append(dialog);
+        dialog.querySelector('[data-close]').onclick=()=>dialog.close();
+        dialog.querySelector('[data-zoom]').onclick=event=>{const zoom=dialog.classList.toggle('zoomed');event.currentTarget.textContent=zoom?'适合屏幕':'放大';event.currentTarget.setAttribute('aria-pressed',String(zoom));};
+        dialog.onclose=()=>$('#view-image')?.focus();
+      }
+      dialog.showModal();
+    };
     const showSave=()=>{
       let dialog=$('#save-dialog');if(dialog){dialog.showModal();return;}
       dialog=document.createElement('dialog');dialog.id='save-dialog';dialog.className='save-dialog';

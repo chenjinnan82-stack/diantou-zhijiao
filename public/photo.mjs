@@ -1,3 +1,4 @@
+let lastInvite = -1;
 import { headwearSVG, photoTransform, moveHeadwear, hitHeadwear } from './headwear.mjs';
 import { results, describeItems, purchaseSummary, escapeHTML as e } from './game.mjs';
 import { foodSVG, mealSVG, envelopeSVG } from './art.mjs';
@@ -183,7 +184,7 @@ export function createPhoto({ game, toast }) {
     finally { busy = false; }
   }
   function preview() {
-    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="点头之交.png">保存图片</a>${navigator.canShare?.({files:[outputFile]})?'<button id="share-image" class="button secondary">分享</button>':''}</div><div class="button-row"><button id="edit-photo" class="text-button">${source ? '编辑' : '加合照'}</button><button id="photo-back" class="text-button">返回结果</button></div><p id="save-status" class="fine save-status" role="status"></p><button id="save-help" class="text-button" hidden>没有保存？查看保存方式</button><div id="photo-error" role="alert"></div><details><summary>更多</summary><button id="copy-link" class="text-button">复制邀请</button><a href="${outputURL}" target="_blank" rel="noopener">打开原图</a></details></div>`;
+    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="点头之交.png">保存图片</a>${navigator.canShare?.({files:[outputFile]})?'<button id="share-image" class="button secondary">分享</button>':''}</div><div class="button-row"><button id="edit-photo" class="text-button">${source ? '编辑' : '加合照'}</button><button id="photo-back" class="text-button">返回结果</button></div><p id="save-status" class="fine save-status" role="status"></p><button id="save-help" class="text-button" hidden>没有保存？查看保存方式</button><div id="photo-error" role="alert"></div><details><summary>更多</summary><div class="invite-actions"><button id="copy-link" class="button secondary">喊朋友来玩 ↗</button><a class="text-button" href="${outputURL}" target="_blank" rel="noopener">查看大图</a></div></details></div>`;
     const showSave=()=>{
       let dialog=$('#save-dialog');if(dialog){dialog.showModal();return;}
       dialog=document.createElement('dialog');dialog.id='save-dialog';dialog.className='save-dialog';
@@ -207,7 +208,7 @@ export function createPhoto({ game, toast }) {
       } catch (err) { if (err.name !== 'AbortError') error('系统分享没能打开，可以直接保存图片。'); }
     };
     $('#copy-link').onclick = async () => {
-      try { await navigator.clipboard.writeText('点头之交｜猜你点什么，就知道有多熟。\nhttps://sanliang.online/lab/play/guess-my-order/'); toast('邀请文案已复制。'); }
+      try { const lines = ['一起吃过那么多次，敢不敢猜我今天点什么？', '嘴上说懂我，餐盘里见真章。来一局？', '你负责猜，我负责饿。来玩「点头之交」！', '友情小测验：我今天想吃的，你能猜中几样？', '先别问吃什么，先猜我会点什么。', '从点头之交，到懂我的胃，就差这一局。']; const next = (lastInvite + 1 + Math.floor(Math.random() * (lines.length - 1))) % lines.length; await navigator.clipboard.writeText(lines[next] + '\n点头之交 · 双人猜餐游戏\nhttps://sanliang.online/lab/play/guess-my-order/'); lastInvite = next; toast('邀请已复制，发给饭搭子吧！'); }
       catch { error('请复制：sanliang.online/lab/play/guess-my-order/'); }
     };
   }

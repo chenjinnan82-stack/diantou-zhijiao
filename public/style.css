@@ -96,3 +96,5 @@ body:not(.in-game) main{min-height:0}
  .welcome-meta{margin:18px 0 0;padding:0;text-align:left}
  body:not(.in-game) .site-foot{margin-top:26px}
 }
+
+.tray-tally{align-items:center;gap:12px}.tray-tally>span{display:flex;align-items:center;gap:12px;font-size:13px}.tray-tally .tally-label{margin:0;font-size:12px;color:#625f55}.tray-tally>strong{font-size:25px;white-space:nowrap}.invite-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:12px 0}.invite-actions .button{font-size:17px;min-height:48px}.invite-actions a{display:flex;align-items:center;font-size:14px}

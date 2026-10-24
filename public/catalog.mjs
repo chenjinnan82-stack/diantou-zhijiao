@@ -31,7 +31,7 @@ export function mountCatalog(root,{snapshot,pieces,onChange,api,toast}) {
       return `<button type="button" class="tray-piece ${v?.combo?'bundle-piece':''} ${v?'':'pending-piece'}" data-piece="${e(p.key)}" style="left:${p.x*100}%;top:${p.y*100}%;--tilt:${[-5,4,-3,7,-7,2][i]}deg" aria-label="调整${e(name)}，第${i+1}份；方向键移动，Delete拿出" title="${e(name)} · 点击调整">${v?orderSVG(v):foodSVG(foodKind(name))}${v?'':'<span class="pending-label">'+(state(p.productId).error?'待重试':state(p.productId).detail&&!state(p.productId).variant?'选搭配':'确认中…')+'</span>'}</button>`;
     }).join('');
     const total=selected.reduce((n,p)=>n+(variant(p.id)?.price||0),0),pending=selected.some(p=>!p.id),over=snapshot.budget === null ? 0 : total-snapshot.budget;
-    root.querySelector('.tray-tally').innerHTML=`<span>${selected.length} / ${MAX_PIECES} 份<span class="tally-label">${pending?'已确认部分':'搭配估算'}</span></span><strong>${money(total)}</strong>`;
+    root.querySelector('.tray-tally').innerHTML=`<span>${selected.length} / ${MAX_PIECES} 份<span class="tally-label">${pending?'已确认金额':'参考合计'}</span></span><strong>${money(total)}</strong>`;
     root.querySelector('.tray-feedback').textContent=over>0?`超出预算 ${money(over)}`:pending?'核价中…':'';
     root.querySelector('.tray-pending').innerHTML=selected.filter(p=>!p.id).map(p=>{
       const s=state(p.productId);return `<div><span>${e(product(p.productId).name)}${s.error?`：${e(s.error)}`:''}</span>${s.error?`<button type="button" data-retry="${e(p.key)}">重试</button>`:''}${s.detail?`<button type="button" data-edit="${e(p.key)}">选搭配</button>`:''}<button type="button" data-remove="${e(p.key)}">拿出</button></div>`;

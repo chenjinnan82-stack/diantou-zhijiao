@@ -1,6 +1,7 @@
+import { headwearSVG, photoTransform } from './headwear.mjs';
 import { results, describeItems, purchaseSummary, escapeHTML as e } from './game.mjs';
 import { foodSVG, mealSVG, envelopeSVG } from './art.mjs';
-const W = 940, H = 650, PAPER = '#E5E0D2', INK = '#25231F';
+const W = 940, H = 1000, PAPER = '#E5E0D2', INK = '#25231F';
 const imageFrom = url => new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error('无法读取这张照片，请试试 JPG、PNG 或截图。')); img.src = url; });
 const svgImage = svg => imageFrom(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
 function lines(ctx, text, width) {
@@ -24,11 +25,34 @@ function paperRect(ctx, x, y, w, h, fill) { ctx.fillStyle = fill; ctx.strokeStyl
 export function createPhoto({ game, toast }) {
   let container, back, source, outputURL, outputFile, zoom = 1, offsetX = 0, offsetY = 0, mode = 'choose', busy = false, drag, imageVersion = 0, active = true;
   const outcome = results(game), cache = new Map();
+  let worker, detectionTimer, faces=[], activeHead=-1, fit=true, retro=true, touched=false;
+  const choices=outcome.map(r=>r.actual.items);
+  const hats=choices.map(items=>({item:items.findIndex(i=>i.group==='main')>=0?items.findIndex(i=>i.group==='main'):0,x:.5,y:.35,size:.28,angle:0,visible:false}));
+  const stopDetection=()=>{clearTimeout(detectionTimer);worker?.terminate();worker=null;};
+  const resetHats=()=>{hats.forEach((h,i)=>Object.assign(h,{x:i?.68:.32,y:.35,size:.28,angle:0,visible:false}));faces=[];touched=false;activeHead=-1;};
+  async function detect(){
+    stopDetection();const version=imageVersion;error('正在定位脸部…');
+    try{
+      worker=new Worker(new URL('./face-worker.mjs',import.meta.url));
+      const scale=Math.min(1,640/Math.max(source.width,source.height));
+      const bitmap=await createImageBitmap(source,{resizeWidth:Math.round(source.width*scale),resizeHeight:Math.round(source.height*scale)});
+      if(version!==imageVersion||!worker){bitmap.close();return;}
+      detectionTimer=setTimeout(()=>{stopDetection();if(active)error('可点选人物，手动放置头套。');},10000);
+      worker.onmessage=({data})=>{stopDetection();if(version!==imageVersion||touched)return;
+        if(data.error){error('自动定位不可用，可手动放置头套。');return;}
+        faces=(data.faces||[]).map(f=>({x:(f.box.originX+f.box.width/2)/(source.width*scale),y:(f.box.originY+f.box.height/2)/(source.height*scale),size:f.box.width/(source.width*scale)*2.3,angle:Math.atan2((f.points[1].y-f.points[0].y)*source.height,(f.points[1].x-f.points[0].x)*source.width)*180/Math.PI})).sort((a,b)=>a.x-b.x);
+        faces.forEach(f=>{if(f.angle>90)f.angle-=180;if(f.angle< -90)f.angle+=180;});
+        if(faces.length<=2)faces.forEach((f,i)=>Object.assign(hats[i],f,{visible:true}));
+        if(active&&mode==='crop'){crop();const status=$('#photo-error');status.dataset.detection=JSON.stringify({faces:faces.length,loadMs:data.loadMs,detectMs:data.detectMs});if(!faces.length)error('没找到脸部，可点选人物手动放置。');}
+      };
+      worker.onerror=()=>{stopDetection();if(active)error('自动定位不可用，可以手动放置。');};worker.postMessage({bitmap},[bitmap]);
+    }catch{stopDetection();if(active)error('可手动放置头套。');}
+  }
   const $ = selector => container.querySelector(selector);
-  const art = async svg => { if (!cache.has(svg)) cache.set(svg, svgImage(svg)); return cache.get(svg); };
-  function title() { return `<div class="photo-heading"><h1>把今天，贴起来。</h1><p>照片只在本机处理，刷新后需要重新选择。</p></div>`; }
+  const art = async svg => { if (!cache.has(svg)) cache.set(svg, svgImage(svg).then(img=>{cache.set(svg,img);return img;})); return cache.get(svg); };
+  function title() { return `<div class="photo-heading"><h1>把今天，贴起来。</h1></div>`; }
   function inputs() { return '<input type="file" id="camera-input" hidden accept="image/*" capture="user" aria-label="拍摄双人合照"><input type="file" id="gallery-input" hidden accept="image/*" aria-label="从相册选择合照">'; }
-  function mount(node, onBack) { container = node; active = true; back = () => { active = false; onBack(); }; render(); }
+  function mount(node, onBack) { container = node; active = true; back = () => { dispose(); onBack(); }; render(); }
   function render() {
     if (mode === 'preview' && outputURL) preview();
     else if (source) crop();
@@ -57,31 +81,51 @@ export function createPhoto({ game, toast }) {
       const ctx = reduced.getContext('2d'); ctx.drawImage(image, 0, 0, reduced.width, reduced.height);
       if (version !== imageVersion) return;
       if (source) { source.width = 0; source.height = 0; }
-      source = reduced; zoom = 1; offsetX = 0; offsetY = 0; mode = 'crop'; clearOutput(); if (active) render();
+      stopDetection();source = reduced;resetHats(); zoom = 1; offsetX = 0; offsetY = 0; mode = 'crop'; clearOutput(); if (active) {render();detect();}
     } catch (err) { error(err.message || '照片没能读出来，请重选。'); }
     finally { URL.revokeObjectURL(url); busy = false; }
   }
   function drawPhoto(ctx, x, y, w, h) {
     ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); ctx.fillStyle = '#F4F0E4'; ctx.fillRect(x, y, w, h);
     if (source) {
-      const scale = Math.min(w / source.width, h / source.height) * zoom;
-      ctx.drawImage(source, x + (w - source.width * scale) / 2 + offsetX * w / W, y + (h - source.height * scale) / 2 + offsetY * h / H, source.width * scale, source.height * scale);
+      const t=photoTransform(source.width,source.height,W,H,fit,zoom,offsetX,offsetY),rx=w/W,ry=h/H;
+      ctx.save();ctx.filter='blur(20px)';const cover=Math.max(w/source.width,h/source.height)*1.1;
+      ctx.drawImage(source,x+(w-source.width*cover)/2,y+(h-source.height*cover)/2,source.width*cover,source.height*cover);ctx.restore();
+      ctx.save();ctx.filter=retro?'sepia(0.18) saturate(0.88) contrast(0.96)':'none';
+      ctx.drawImage(source,x+t.x*rx,y+t.y*ry,source.width*t.scale*rx,source.height*t.scale*ry);ctx.restore();
+      if(retro){ctx.fillStyle='#d8a95a';ctx.globalAlpha=.06;ctx.fillRect(x,y,w,h);ctx.globalAlpha=.075;ctx.fillStyle='#25231F';for(let n=0;n<2800;n++){const gx=(n*73.37)%W,gy=(n*131.91)%H;ctx.fillRect(x+gx*rx,y+gy*ry,rx,ry);}ctx.globalAlpha=1;}
+      hats.forEach((hat,i)=>{if(!hat.visible)return;const svg=headwearSVG(choices[i][hat.item]?.name||'餐盒'),img=cache.get(svg);if(!img){cache.set(svg,svgImage(svg).then(image=>{cache.set(svg,image);drawCrop();}));return;}if(!img.width)return;ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);hats.forEach((other,j)=>{if(j===i||!other.visible)return;const size=other.size*source.width*t.scale*rx,cx=x+(t.x+other.x*source.width*t.scale)*rx,cy=y+(t.y+other.y*source.height*t.scale)*ry;ctx.moveTo(cx+size*.225*Math.cos(other.angle*Math.PI/180),cy+size*.225*Math.sin(other.angle*Math.PI/180));ctx.ellipse(cx,cy,size*.225,size*.279,other.angle*Math.PI/180,0,Math.PI*2);});ctx.clip('evenodd');ctx.translate(x+(t.x+hat.x*source.width*t.scale)*rx,y+(t.y+hat.y*source.height*t.scale)*ry);ctx.rotate(hat.angle*Math.PI/180);const size=hat.size*source.width*t.scale*rx;ctx.drawImage(img,-size/2,-size*135/240,size,size);ctx.restore();});
     }
     ctx.restore();
   }
   function drawCrop() { const canvas = $('#crop'); if (!canvas) return; drawPhoto(canvas.getContext('2d'), 0, 0, W, H); }
-  function clampOffset() { offsetX = Math.max(-W * .45, Math.min(W * .45, offsetX)); offsetY = Math.max(-H * .45, Math.min(H * .45, offsetY)); }
+  function clampOffset() { const t=photoTransform(source.width,source.height,W,H,fit,zoom,offsetX,offsetY);offsetX=t.ox;offsetY=t.oy; }
   function crop() {
-    container.innerHTML = `${title()}<section><div class="crop-wrap"><canvas id="crop" class="crop-surface" width="${W}" height="${H}" tabindex="0" aria-label="照片取景，按方向键移动；也可拖动照片"></canvas><div class="crop-controls"><label for="zoom">缩放</label><input type="range" id="zoom" min="1" max="4" step="0.01" value="${zoom}"><button id="fit" class="text-button">完整入镜</button></div><div class="nudge-controls" aria-label="移动照片"><button data-nudge="left" aria-label="向左移动">←</button><button data-nudge="up" aria-label="向上移动">↑</button><button data-nudge="down" aria-label="向下移动">↓</button><button data-nudge="right" aria-label="向右移动">→</button></div></div><p class="crop-help">拖动照片调整位置 · 两个人都在画面里就好</p>${inputs()}<div id="photo-error" role="alert"></div><div class="action-dock"><button id="generate" class="button full">做成大头贴 <span aria-hidden="true">↗</span></button><div class="button-row"><button id="reselect" class="text-button">重新选照片</button><button id="photo-back" class="text-button">回到揭晓</button></div></div></section>`;
+    container.innerHTML = `${title()}<section><div class="crop-wrap"><canvas id="crop" class="crop-surface" width="${W}" height="${H}" tabindex="0" aria-label="照片取景，按方向键移动；也可拖动照片"></canvas><div class="crop-controls"><label for="zoom">缩放</label><input type="range" id="zoom" min="1" max="4" step="0.01" value="${zoom}"><button id="fit" class="text-button">重置取景</button></div><div class="nudge-controls" aria-label="移动照片"><button data-nudge="left" aria-label="向左移动">←</button><button data-nudge="up" aria-label="向上移动">↑</button><button data-nudge="down" aria-label="向下移动">↓</button><button data-nudge="right" aria-label="向右移动">→</button></div></div><div class="head-controls"><div class="button-row"><button type="button" data-target="-1">照片</button>${game.names.map((n,i)=>`<button type="button" data-target="${i}">${e(n)}</button>`).join('')}<button id="swap-hats">交换</button></div><div id="hat-options"></div><div class="button-row"><button id="fill-photo">${fit?'填满画面':'完整入镜'}</button><button id="filter-photo">${retro?'拍立得 ✓':'原图 ✓'}</button></div></div>${inputs()}<div id="photo-error" role="alert"></div><div class="action-dock"><button id="generate" class="button full">做成大头贴 <span aria-hidden="true">↗</span></button><div class="button-row"><button id="reselect" class="text-button">重新选照片</button><button id="photo-back" class="text-button">回到揭晓</button></div></div></section>`;
     bindInputs(); drawCrop();
+    const hatOptions=()=>{
+      container.querySelectorAll('[data-target]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.target)===activeHead)));
+      $('#crop').setAttribute('aria-label',activeHead<0?'照片取景，拖动或使用方向键移动':'移动'+game.names[activeHead]+'的头套，拖动或使用方向键');
+      $('#zoom').disabled=activeHead!==-1;
+      $('#hat-options').innerHTML=activeHead<0?'':`<label>头套<select id="hat-food">${choices[activeHead].map((i,j)=>`<option value="${j}" ${hats[activeHead].item===j?'selected':''}>${e(i.name)}</option>`).join('')}</select></label><label>大小<input id="hat-size" type="range" min="0.1" max="1.5" step="0.01" value="${hats[activeHead].size}"></label><label>旋转<input id="hat-angle" type="range" min="-180" max="180" value="${hats[activeHead].angle}"></label><button id="hat-show">${hats[activeHead].visible?'隐藏':'显示'}</button><button id="hat-reset">重置</button>${faces.length>2?faces.map((f,i)=>`<button data-face="${i}">人物 ${i+1}</button>`).join(''):''}`;
+      if(activeHead<0)return;
+      for(const [id,key] of [['hat-food','item'],['hat-size','size'],['hat-angle','angle']])$('#'+id).oninput=event=>{touched=true;hats[activeHead][key]=Number(event.target.value);hats[activeHead].visible=true;drawCrop();};
+      $('#hat-show').onclick=()=>{touched=true;hats[activeHead].visible=!hats[activeHead].visible;hatOptions();drawCrop();};
+      $('#hat-reset').onclick=()=>{touched=true;Object.assign(hats[activeHead],faces[activeHead]||{x:activeHead?.68:.32,y:.35,size:.28,angle:0},{visible:true});hatOptions();drawCrop();};
+      container.querySelectorAll('[data-face]').forEach(b=>b.onclick=()=>{touched=true;Object.assign(hats[activeHead],faces[Number(b.dataset.face)],{visible:true});hatOptions();drawCrop();});
+    };
+    container.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{activeHead=Number(b.dataset.target);hatOptions();});
+    $('#swap-hats').onclick=()=>{touched=true;const a={...hats[0]},b={...hats[1]};Object.assign(hats[0],b,{item:a.item});Object.assign(hats[1],a,{item:b.item});hatOptions();drawCrop();};
+    $('#fill-photo').onclick=()=>{fit=!fit;zoom=1;offsetX=offsetY=0;crop();};
+    $('#filter-photo').onclick=()=>{retro=!retro;$('#filter-photo').textContent=retro?'拍立得 ✓':'原图 ✓';drawCrop();};hatOptions();
     $('#zoom').oninput = event => { zoom = Number(event.target.value); drawCrop(); };
     $('#fit').onclick = () => { zoom = 1; offsetX = 0; offsetY = 0; $('#zoom').value = 1; drawCrop(); };
     $('#reselect').onclick = () => $('#gallery-input').click(); $('#generate').onclick = generate;
     const canvas = $('#crop');
-    canvas.onpointerdown = event => { drag = { x: event.clientX, y: event.clientY }; canvas.setPointerCapture(event.pointerId); };
-    canvas.onpointermove = event => { if (!drag) return; const rect = canvas.getBoundingClientRect(); offsetX += (event.clientX - drag.x) * W / rect.width; offsetY += (event.clientY - drag.y) * H / rect.height; drag = { x: event.clientX, y: event.clientY }; clampOffset(); drawCrop(); };
+    canvas.onpointerdown = event => { touched=true;if(activeHead>=0){const r=canvas.getBoundingClientRect(),t=photoTransform(source.width,source.height,W,H,fit,zoom,offsetX,offsetY);Object.assign(hats[activeHead],{x:((event.clientX-r.left)*W/r.width-t.x)/(source.width*t.scale),y:((event.clientY-r.top)*H/r.height-t.y)/(source.height*t.scale),visible:true});drawCrop();}drag = { x: event.clientX, y: event.clientY }; canvas.setPointerCapture(event.pointerId); };
+    canvas.onpointermove = event => { if (!drag) return; const rect = canvas.getBoundingClientRect(); if(activeHead>=0){const t=photoTransform(source.width,source.height,W,H,fit,zoom,offsetX,offsetY);hats[activeHead].x+=(event.clientX-drag.x)*W/rect.width/(source.width*t.scale);hats[activeHead].y+=(event.clientY-drag.y)*H/rect.height/(source.height*t.scale);}else{offsetX += (event.clientX - drag.x) * W / rect.width; offsetY += (event.clientY - drag.y) * H / rect.height;} drag = { x: event.clientX, y: event.clientY }; clampOffset(); drawCrop(); };
     canvas.onpointerup = canvas.onpointercancel = () => { drag = null; };
-    const nudge = key => { if (key === 'left') offsetX -= 20; if (key === 'right') offsetX += 20; if (key === 'up') offsetY -= 20; if (key === 'down') offsetY += 20; clampOffset(); drawCrop(); };
+    const nudge = key => { if(activeHead>=0){touched=true;hats[activeHead].x+=key==='left'?-.01:key==='right'?.01:0;hats[activeHead].y+=key==='up'?-.01:key==='down'?.01:0;drawCrop();return;} if (key === 'left') offsetX -= 20; if (key === 'right') offsetX += 20; if (key === 'up') offsetY -= 20; if (key === 'down') offsetY += 20; clampOffset(); drawCrop(); };
     document.querySelectorAll('[data-nudge]').forEach(b => b.onclick = () => nudge(b.dataset.nudge));
     canvas.onkeydown = event => { const key = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }[event.key]; if (key) { event.preventDefault(); nudge(key); } };
   }
@@ -90,46 +134,15 @@ export function createPhoto({ game, toast }) {
     const version = imageVersion;
     const button = $('#generate') || $('#skip'); if (button) { button.disabled = true; button.textContent = '正在贴好这一餐…'; }
     try {
-      await document.fonts.load('48px Xiaolai');
+      stopDetection();await document.fonts.load('48px Xiaolai');
       const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1620;
       const ctx = canvas.getContext('2d'); ctx.fillStyle = PAPER; ctx.fillRect(0, 0, 1080, 1620);
       ctx.fillStyle = INK; ctx.textBaseline = 'top'; ctx.textAlign = 'center'; ctx.font = '28px Xiaolai, sans-serif'; ctx.fillText('双人点餐游戏', 540, 43);
       ctx.font = '68px Xiaolai, sans-serif'; ctx.fillText('你以为我会点什么？', 540, 99);
       ctx.font = '23px sans-serif'; ctx.fillText(new Date(game.snapshot.createdAt).toLocaleDateString('zh-CN').replaceAll('/', ' . '), 540, 194);
-      paperRect(ctx, 51, 234, 978, 720, '#F4F0E4');
-      if (source) drawPhoto(ctx, 70, 252, W, H);
-      else {
-        ctx.fillStyle = '#B69ACA'; ctx.fillRect(70, 252, W, H);
-        const left = await art(mealSVG(outcome[0].actual.items, '', outcome[0].actual.orders)), right = await art(mealSVG(outcome[1].actual.items, '', outcome[1].actual.orders));
-        ctx.drawImage(left, 110, 326, 470, 308); ctx.drawImage(right, 500, 502, 470, 308);
-        ctx.fillStyle = INK; ctx.font = '45px Xiaolai,sans-serif'; ctx.fillText('今天，一起吃这个。', 540, 804);
-      }
-      ctx.fillStyle = INK; ctx.font = '25px Xiaolai,sans-serif'; ctx.fillText('一顿饭，两个人，各有各的心头好。', 540, 915);
-      for (const [kind, x, y, rotation] of [['burger', 7, 207, -.19], ['fries', 908, 785, .17]]) {
-        const img = await art(foodSVG(kind)); ctx.save(); ctx.translate(x + 75, y + 75); ctx.rotate(rotation); ctx.drawImage(img, -75, -75, 150, 150); ctx.restore();
-      }
-      ctx.textAlign = 'left';
-      for (let i = 0; i < 2; i++) {
-        const r = outcome[i], x = i === 0 ? 51 : 555;
-        paperRect(ctx, x, 983, 474, 494, '#F4F0E4');
-        ctx.fillStyle = i === 0 ? '#E8C547' : '#70A58B'; ctx.fillRect(x + 2, 985, 470, 60);
-        ctx.fillStyle = INK; block(ctx, `${r.name} 的餐单`, x + 22, 999, 426, 40, 29);
-        ctx.font = '23px Xiaolai,sans-serif'; ctx.fillText('我想吃的', x + 22, 1064);
-        if (game.version === 3) block(ctx, purchaseSummary(r.actual), x + 22, 1102, 426, 130, 25);
-        else {
-        block(ctx, r.actual.name, x + 22, 1102, 426, game.version === 2 ? 40 : 67, 29);
-        block(ctx, describeItems(r.actual.items), x + 22, game.version === 2 ? 1143 : 1170, 426, game.version === 2 ? 90 : 63, 23);
-        }
-        ctx.strokeStyle = '#9C9586'; ctx.lineWidth = 1; ctx.setLineDash([7, 6]); ctx.beginPath(); ctx.moveTo(x + 22, 1243); ctx.lineTo(x + 452, 1243); ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = INK; block(ctx, `${r.friend} 猜的`, x + 22, 1258, 426, 35, 22);
-        if (game.version === 3) block(ctx, purchaseSummary(r.guess), x + 22, 1300, 426, 118, 24);
-        else {
-        block(ctx, r.guess.name, x + 22, 1300, 426, game.version === 2 ? 40 : 60, 27);
-        block(ctx, describeItems(r.guess.items), x + 22, game.version === 2 ? 1341 : 1361, 426, game.version === 2 ? 77 : 49, 22);
-        }
-        const verdict = r.exact ? '整份猜中！' : r.groups.map(g => `${g.label}${g.match ? '✓' : '×'}`).join('  ');
-        ctx.font = '26px Xiaolai,sans-serif'; ctx.fillText(verdict, x + 22, 1435);
-      }
+      if(source){await Promise.all(hats.map((hat,i)=>art(headwearSVG(choices[i][hat.item]?.name||'餐盒'))));paperRect(ctx,51,234,978,1038,'#F4F0E4');drawPhoto(ctx,70,252,W,H);}
+      else {const left=await art(mealSVG(outcome[0].actual.items)),right=await art(mealSVG(outcome[1].actual.items));ctx.drawImage(left,80,300,450,360);ctx.drawImage(right,550,600,450,360);}
+      outcome.forEach((r,i)=>{const x=i?555:51;paperRect(ctx,x,1290,474,188,i?'#70A58B':'#E8C547');ctx.textAlign='left';block(ctx,r.name,x+18,1305,438,35,29);block(ctx,choices[i][hats[i].item]?.name||'',x+18,1350,438,50,24);block(ctx,r.exact?'整份猜中！':r.groups.some(g=>g.match)?r.groups.filter(g=>g.match).map(g=>g.label).join('、')+'猜中':'这次没猜中',x+18,1418,438,40,23);});
       ctx.textAlign = 'center'; ctx.font = '21px sans-serif'; ctx.fillStyle = INK; ctx.fillText('sanliang.online/lab/play/guess-my-order/', 540, 1514);
       ctx.font = '23px Xiaolai,sans-serif'; ctx.fillText('好好吃饭，顺便猜猜。', 540, 1554);
       if (game.snapshot.demo) { ctx.fillStyle = '#B69ACA'; ctx.fillRect(0, 0, 1080, 28); ctx.fillStyle = INK; ctx.font = '17px sans-serif'; ctx.fillText('开发测试餐单 · 不代表真实可售商品或价格', 540, 4); }
@@ -142,10 +155,11 @@ export function createPhoto({ game, toast }) {
     finally { busy = false; }
   }
   function preview() {
-    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="你以为我会点什么.png">保存图片</a><button id="share-image" class="button secondary">分享</button></div><p class="image-save-tip">微信或部分浏览器中，请长按上方图片保存。<br><a href="${outputURL}" target="_blank" rel="noopener">打开原图</a></p><div class="button-row"><button id="edit-photo" class="text-button">${source ? '调整照片' : '加一张合照'}</button><button id="copy-link" class="text-button">复制游戏链接</button></div><div id="photo-error" role="alert"></div><div class="replay-row"><button id="photo-back" class="text-button">回到揭晓</button></div></div>`;
+    container.innerHTML = `<div class="photo-heading"><h1>今天这张，收好啦。</h1></div><img class="preview-image" src="${outputURL}" width="1080" height="1620" alt="${e(game.names.join('和'))} 的合影餐单卡，1080 × 1620"><div class="preview-actions"><div class="button-row"><a class="button" id="save-image" href="${outputURL}" download="你以为我会点什么.png">保存图片</a>${navigator.canShare?.({files:[outputFile]})?'<button id="share-image" class="button secondary">分享</button>':''}</div><div class="button-row"><button id="edit-photo" class="text-button">${source ? '编辑' : '加合照'}</button><button id="photo-back" class="text-button">返回结果</button></div><div id="photo-error" role="alert"></div><details><summary>更多</summary><button id="copy-link" class="text-button">复制链接</button><a href="${outputURL}" target="_blank" rel="noopener">打开原图</a></details></div>`;
+    $('#save-image').onclick=()=>{if(/MicroMessenger/i.test(navigator.userAgent))toast('长按图片保存');};
     $('#edit-photo').onclick = () => { mode = source ? 'crop' : 'choose'; render(); };
     $('#photo-back').onclick = back;
-    $('#share-image').onclick = async () => {
+    if($('#share-image'))$('#share-image').onclick = async () => {
       try {
         if (navigator.canShare?.({ files: [outputFile] })) await navigator.share({ files: [outputFile], title: '你以为我会点什么' });
         else { toast('请保存图片后分享给朋友；也可以长按上方图片。'); $('#save-image').focus(); }
@@ -157,6 +171,6 @@ export function createPhoto({ game, toast }) {
     };
   }
   function clearOutput() { if (outputURL) URL.revokeObjectURL(outputURL); outputURL = null; outputFile = null; }
-  function dispose() { active = false; imageVersion++; clearOutput(); if (source) { source.width = 0; source.height = 0; source = null; } cache.clear(); }
+  function dispose() { active = false;stopDetection(); imageVersion++; clearOutput(); if (source) { source.width = 0; source.height = 0; source = null; } cache.clear(); }
   return { mount, dispose };
 }

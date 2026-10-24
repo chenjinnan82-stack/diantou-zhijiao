@@ -16,3 +16,5 @@ location /lab/play/guess-my-order/ {
 保留服务返回的定位权限与安全响应头。定位和分享需要 HTTPS（本机回环除外）。不要将环境文件放入静态目录。启用 gzip，访问 `/lab/play/guess-my-order/api/health` 验证服务。新部署先用独立目录检查，再切换进程目录；保留旧目录和配置用于回滚，不将环境文件打包。
 
 腾讯 IP 白名单填写服务实际出口 IP，三个地图接口均需分配额度。无需数据库。缓存有容量和五分钟时限，上游并发最多两个；上线后检查错误率、内存和上游配额，避免对真实账号压测。
+
+自动头套检测需要同源 .js/.mjs JavaScript MIME、.wasm application/wasm；CSP 增加 `worker-src 'self'` 与 `script-src 'self' 'wasm-unsafe-eval'`。保持照片请求本机，不配置外部 CDN。可对 application/wasm 开启 gzip，初次模型下载不计入首屏。

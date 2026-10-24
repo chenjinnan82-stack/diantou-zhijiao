@@ -1,3 +1,12 @@
+export function parseBudget(value) {
+  value=value.trim();
+  if (value === '') return null;
+  if (!/^\d+(?:\.\d{1,2})?$/.test(value)) throw new Error('预算请填写正数，最多两位小数。');
+  const [whole, decimal = ''] = value.split('.');
+  const cents = BigInt(whole) * 100n + BigInt(decimal.padEnd(2, '0'));
+  if (cents > BigInt(Number.MAX_SAFE_INTEGER) || cents <= 0n) throw new Error('请输入有效预算。');
+  return Number(cents);
+}
 export const GROUPS = { main: '主餐', side: '配餐', drink: '饮料', extra: '其他' };
 export const STAGES = ['a-self', 'a-guess', 'handoff', 'b-self', 'b-guess', 'ready', 'result'];
 export const money = cents => `¥${(cents / 100).toFixed(2).replace(/\.00$/, '')}`;
@@ -48,7 +57,7 @@ export function compareMeals(actual, guess) {
 }
 
 export function validSnapshot(s) {
-  if (s?.mode === 'catalog') return !!(typeof s.id === 'string' && s.id.length < 100 && Number.isFinite(Date.parse(s.createdAt)) && s.store && typeof s.store.name === 'string' && Number.isSafeInteger(s.budget) && s.budget >= 1000 && s.budget <= 20000 && Array.isArray(s.conditions) && s.conditions.every(c=>typeof c==='string') && Array.isArray(s.categories) && s.categories.length<=100 && s.categories.every(c=>typeof c.id==='string'&&typeof c.name==='string') && Array.isArray(s.products) && s.products.length>=3 && s.products.length<=500 && new Set(s.products.map(p=>p.id)).size===s.products.length && s.products.every(p=>typeof p.id==='string'&&p.id.length<=100&&typeof p.name==='string'&&p.name.length<=120&&p.group in GROUPS&&s.categories.some(c=>c.id===p.category)) && Array.isArray(s.variants) && s.variants.length<=300 && new Set(s.variants.map(v=>v.id)).size===s.variants.length && s.variants.every(v=> typeof v.id==='string' && v.id.length<=100 && s.products.some(p=>p.id===v.productId) && typeof v.name==='string' && Number.isSafeInteger(v.price) && v.price>=0 && v.price<=100000 && Array.isArray(v.changes) && v.changes.every(c=>typeof c==='string') && Array.isArray(v.items) && v.items.length>0 && v.items.length<=60 && v.items.every(i=>typeof i.code==='string'&&typeof i.name==='string'&&typeof i.spec==='string'&&i.group in GROUPS&&Number.isSafeInteger(i.quantity)&&i.quantity>=1&&i.quantity<=20)));
+  if (s?.mode === 'catalog') return !!(typeof s.id === 'string' && s.id.length < 100 && Number.isFinite(Date.parse(s.createdAt)) && s.store && typeof s.store.name === 'string' && (s.budget === null || (Number.isSafeInteger(s.budget) && s.budget > 0)) && Array.isArray(s.conditions) && s.conditions.every(c=>typeof c==='string') && Array.isArray(s.categories) && s.categories.length<=100 && s.categories.every(c=>typeof c.id==='string'&&typeof c.name==='string') && Array.isArray(s.products) && s.products.length>=3 && s.products.length<=500 && new Set(s.products.map(p=>p.id)).size===s.products.length && s.products.every(p=>typeof p.id==='string'&&p.id.length<=100&&typeof p.name==='string'&&p.name.length<=120&&p.group in GROUPS&&s.categories.some(c=>c.id===p.category)) && Array.isArray(s.variants) && s.variants.length<=300 && new Set(s.variants.map(v=>v.id)).size===s.variants.length && s.variants.every(v=> typeof v.id==='string' && v.id.length<=100 && s.products.some(p=>p.id===v.productId) && typeof v.name==='string' && Number.isSafeInteger(v.price) && v.price>=0 && v.price<=100000 && Array.isArray(v.changes) && v.changes.every(c=>typeof c==='string') && Array.isArray(v.items) && v.items.length>0 && v.items.length<=60 && v.items.every(i=>typeof i.code==='string'&&typeof i.name==='string'&&typeof i.spec==='string'&&i.group in GROUPS&&Number.isSafeInteger(i.quantity)&&i.quantity>=1&&i.quantity<=20)));
   if (s?.mode === 'tray') return !!(typeof s.id === 'string' && s.id.length < 100 && Number.isFinite(Date.parse(s.createdAt)) && s.store && typeof s.store.name === 'string' &&
     Number.isSafeInteger(s.budget) && s.budget >= 1000 && s.budget <= 20000 && Array.isArray(s.conditions) && s.conditions.every(c => typeof c === 'string') &&
     Array.isArray(s.products) && s.products.length >= 3 && s.products.length <= 24 && new Set(s.products.map(p => p.id)).size === s.products.length &&

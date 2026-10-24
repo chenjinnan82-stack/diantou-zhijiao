@@ -84,7 +84,7 @@ export function createApp({ token = '', mapKey = '', locate, demo = false, call,
     if (route === 'menu') {
       const storeId = inputText(body.storeId, '门店', 30), budget = body.budget;
       if (body.mode !== undefined && !['tray','catalog'].includes(body.mode)) throw new AppError('INPUT', '不支持的餐单类型。', 400);
-      if (!Number.isSafeInteger(budget) || budget < 1000 || budget > 20000) throw new AppError('INPUT', '每人预算请设置在 10–200 元之间。', 400);
+      if (body.mode === 'catalog' ? !(budget === null || (Number.isSafeInteger(budget) && budget > 0)) : (!Number.isSafeInteger(budget) || budget < 1000 || budget > 20000)) throw new AppError('INPUT', '请输入有效的参考预算。', 400);
       const found = stores.get(storeId);
       if (!found || found.until < Date.now()) throw new AppError('STORE_EXPIRED', '门店记录过期了，请重新搜索。', 410);
       if (!found.value.open) throw new AppError('CLOSED', '这家门店当前没有营业，请换一家门店。', 422);
@@ -177,7 +177,7 @@ export function createApp({ token = '', mapKey = '', locate, demo = false, call,
   }
   const server = http.createServer(async (req, res) => {
     const start = Date.now();
-    const security = { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin', 'Permissions-Policy': 'camera=(self), microphone=(), geolocation=(self)', 'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'" };
+    const security = { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin', 'Permissions-Policy': 'camera=(self), microphone=(), geolocation=(self)', 'Content-Security-Policy': "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'" };
     Object.entries(security).forEach(([k, v]) => res.setHeader(k, v));
     const json = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
     let route = 'static';
@@ -210,7 +210,7 @@ export function createApp({ token = '', mapKey = '', locate, demo = false, call,
       let asset = assets.get(path);
       if (!asset || asset.mtime !== info.mtimeMs) { const data = await readFile(path); asset = { mtime: info.mtimeMs, data, gzip: gzipSync(data) }; boundedPut(assets, path, asset, 50); }
       const gzip = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
-      const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8' };
+      const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.wasm': 'application/wasm', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8' };
       res.writeHead(200, { 'Content-Type': types[extname(path)] || 'application/octet-stream', 'Cache-Control': 'no-cache', Vary: 'Accept-Encoding', ...(gzip ? { 'Content-Encoding': 'gzip' } : {}) });
       res.end(req.method === 'HEAD' ? undefined : gzip ? asset.gzip : asset.data);
     } catch (e) {

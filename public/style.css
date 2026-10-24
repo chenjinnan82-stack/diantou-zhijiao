@@ -29,3 +29,27 @@
 @media(min-width:700px){.catalog-selection .screen-head{padding:14px 0 6px}.catalog-scroll{height:clamp(250px,calc(100dvh - 340px),520px)}.catalog-editor{height:clamp(310px,calc(100dvh - 280px),580px)}}
 @media(max-width:699px){.catalog-scroll{height:clamp(160px,calc(100dvh - 640px),280px)}}
 .combo-slot select:focus-visible{outline:3px solid var(--purple);outline-offset:3px}
+/* Mobile v4: native menu scrolling, separate tray manipulation. */
+body.in-game .site-foot{display:none}.combo-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.combo-choice{border:1px solid #b6ad99;border-radius:8px;background:var(--white);min-width:0}.combo-choice.selected{background:#f5e5a0;border-color:var(--ink)}.combo-choice>button{width:100%;border:0;background:none;color:var(--ink);font:13px/1.4 sans-serif;min-height:100px;padding:6px}.combo-choice svg{display:block;width:70px;height:65px;margin:auto}.choice-count{display:flex;align-items:center;justify-content:space-around}.choice-count button{min-width:44px;min-height:44px;background:none;border:0;font-size:22px}.choice-count[hidden],.combo-choice[hidden]{display:none}.catalog-editor{scrollbar-width:thin}.catalog-builder .tray-feedback:empty{min-height:12px}.catalog-builder .tray-tally{margin-top:6px}.catalog-builder .action-dock{margin-top:3px}.catalog-selection .screen-head{padding-top:4px}
+@media(pointer:coarse){.catalog-cell .food-illustration{touch-action:pan-y;cursor:pointer}.catalog-cell .food-tile:hover .food-illustration svg{transform:none}.catalog-cell .food-tile{touch-action:pan-y}}
+@media(max-width:699px){body.in-game .masthead{padding:4px 0}.catalog-selection .screen-head h1{font-size:23px}.catalog-selection .store-caption{margin:3px 0}.catalog-scroll{height:max(260px,calc(100dvh - 400px))}.catalog-editor{height:max(300px,calc(100dvh - 360px))}.catalog-builder .serving-tray{height:125px}.catalog-builder .tray-topline{height:28px;min-height:28px}.catalog-builder .tray-piece{width:76px;height:76px}.catalog-builder .bundle-piece{width:85px;height:85px}.catalog-builder .tray-feedback{min-height:18px}.catalog-selection .action-dock .button{min-height:44px;padding:9px}.catalog-cell .food-title{font-size:14px}.catalog-cell,.catalog-cell .food-tile{min-height:155px}}
+@media(max-height:560px){.catalog-scroll,.catalog-editor{height:320px}.catalog-builder .tray-table{position:static}}
+.head-controls{max-width:540px;margin:12px auto}.head-controls button{min-height:44px;padding:6px 12px;border:1px solid var(--ink);border-radius:5px;background:var(--white);color:var(--ink)}.head-controls .button-row{flex-wrap:wrap;margin:8px 0;gap:6px}#hat-options{display:flex;flex-wrap:wrap;gap:8px;align-items:center}#hat-options label{display:flex;gap:8px;align-items:center;font-size:13px}#hat-options select{max-width:220px;min-height:44px}#hat-options input{min-height:44px}.crop-wrap{max-width:430px}.crop-surface{max-height:55dvh;object-fit:contain}.preview-actions>.button-row:first-child{position:sticky;bottom:0;background:var(--paper);padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:2}.preview-actions>.button-row{margin:8px 0}.preview-actions details{padding:8px 0}.preview-actions summary{min-height:44px;cursor:pointer}.photo-heading{padding:12px 0}.photo-heading h1{font-size:30px}
+.crop-surface{width:min(100%,calc(55dvh * .94));height:auto;max-height:none;margin:auto}
+.just-added{animation:tray-arrival 180ms ease-out}@keyframes tray-arrival{from{opacity:.2;scale:.7}to{opacity:1;scale:1}}@media(prefers-reduced-motion:reduce){.just-added{animation:none}}
+.head-controls button[aria-pressed=true]{background:var(--yellow);border:2px solid var(--ink)}section:has(#crop) .action-dock{position:static;padding:12px 0}.preview-actions{position:sticky;bottom:0;z-index:5;background:var(--paper);padding:6px 0 max(6px,env(safe-area-inset-bottom))}.preview-actions>.button-row:first-child{position:static}.preview-actions details{padding:0}.preview-actions summary{min-height:44px;text-align:center;list-style-position:inside}
+body.in-game .wordmark{visibility:hidden}.catalog-selection.configuring .action-dock{display:none}.combo-form>button[type=submit]{position:sticky;bottom:0;z-index:2}.catalog-builder .tray-feedback:empty{min-height:18px}
+@media(max-width:699px) and (min-height:650px){
+ .page:has(.catalog-selection){height:100dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+ body:has(#demo-banner:not([hidden])) .page:has(.catalog-selection){height:calc(100dvh - 32px)}
+ .page:has(.catalog-selection)>main{min-height:0;flex:1}
+ .catalog-selection{height:100%;display:flex;flex-direction:column}
+ .catalog-selection .screen-head,.catalog-selection .store-caption,.catalog-selection>.action-dock{flex:none}
+ .catalog-builder{flex:1;min-height:0;grid-template-rows:minmax(220px,1fr) auto}
+ .catalog-counter{display:flex;flex-direction:column;min-height:0}
+ .catalog-scroll,.catalog-editor{height:auto;min-height:0;flex:1}
+ .catalog-tabs{flex:none}
+ .catalog-selection .action-dock .text-button{margin:0 auto;font-size:12px}
+}
+@media(max-width:699px) and (min-height:650px){.catalog-builder{align-items:stretch}.catalog-counter{height:100%;overflow:hidden}.catalog-scroll,.catalog-editor{flex:1 1 0;overflow-y:auto}}
+.page:has(.catalog-selection)>.masthead{display:none}.catalog-selection .screen-head{padding-top:12px}

@@ -104,7 +104,7 @@ npm test
 
 原创代码与插画采用 [MIT](LICENSE)，小赖字体采用 [SIL OFL 1.1](public/assets/Xiaolai-OFL.txt)。本作非麦当劳官方产品。
 
-[参赛声明](CONTEST_DECLARATION.md)按官方原文保留；项目使用麦当劳 MCP，不申报 WorkBuddy 专项奖励。项目展示名为「点头之交」，仓库地址保留 `mcd-guess-my-order`，以延续报名及已有链接。
+[参赛声明](CONTEST_DECLARATION.md)按官方原文保留；项目使用麦当劳 MCP，不申报 WorkBuddy 专项奖励。项目展示名为「点头之交」，仓库名为 `diantou-zhijiao`。
 
 ---
 

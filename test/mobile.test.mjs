@@ -56,6 +56,22 @@ test('direct headwear selection and pinch preserve anchors across finger transit
  ctx.canvas.onpointermove(ev(280,400));assert.ok(Math.abs(hats[0].x-after.x-10/940)<1e-10);assert.equal(hats[0].angle,after.angle);
  ctx.canvas.onpointercancel(ev(280,400));ctx.canvas.onpointermove(ev(500,500));assert.equal(hats[0].angle,after.angle);
  ctx.canvas.onpointerdown(ev(752,700));assert.equal(ctx.activeHead,1);ctx.canvas.onpointerup(ev(752,700));
+ // Release either finger first, then re-add it: each new baseline must be stationary.
+ for(const released of [1,2]){
+  hats[0]={x:.3,y:.4,size:.28,angle:0,visible:true};ctx.resetGesture();
+  ctx.canvas.onpointerdown(ev(250,400));ctx.canvas.onpointerdown(ev(350,400,2));
+  ctx.canvas.onpointermove(ev(350,460,2));const snapshot={...hats[0]};
+  ctx.canvas.onpointerdown(ev(100,100,3));ctx.canvas.onpointerup(ev(100,100,3));assert.deepEqual(hats[0],snapshot);
+  ctx.canvas.onpointerup(released===1?ev(250,400):ev(350,460,2));
+  ctx.canvas.onlostpointercapture(released===1?ev(250,400):ev(350,460,2));
+  const remaining=released===1?ev(350,460,2):ev(250,400);ctx.canvas.onpointermove(remaining);assert.deepEqual(hats[0],snapshot);
+  ctx.canvas.onpointerdown(released===1?ev(250,400):ev(350,460,2));ctx.canvas.onpointermove(remaining);assert.ok(Math.abs(hats[0].x-snapshot.x)<1e-10);assert.ok(Math.abs(hats[0].angle-snapshot.angle)<1e-10);
+ }
+ // Switching the player control while a finger is still down cancels the old gesture.
+ const targetButton={dataset:{target:'1'}};ctx.container={querySelectorAll:()=>[targetButton]};
+ runInNewContext(source.split('\n').find(line=>line.includes('activeHead=Number(b.dataset.target)')),ctx);
+ const other={...hats[1]};targetButton.onclick();ctx.canvas.onpointermove(ev(400,600));assert.deepEqual(hats[1],other);
+ ctx.canvas.onpointerup(ev(400,600));ctx.canvas.onpointerup(ev(350,460,2));
  for(const [width,height] of [[1600,900],[900,1600]])for(const angle of [-90,0,135]){
   const h={x:.3,y:.4,size:.28,angle,visible:true},p={x:h.x*width,y:h.y*height};assert.ok(hitHeadwear(h,p,width,height));
   const moved=moveHeadwear(h,[p],[{x:p.x+20,y:p.y+30}],width,height);assert.ok(Math.abs((moved.x-h.x)*width-20)<1e-8);assert.ok(Math.abs((moved.y-h.y)*height-30)<1e-8);assert.equal(moved.size,h.size);assert.equal(moved.angle,angle);

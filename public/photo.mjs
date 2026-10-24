@@ -109,13 +109,13 @@ export function createPhoto({ game, toast }) {
       $('#zoom').disabled=activeHead!==-1;
       $('#hat-options').innerHTML=activeHead<0?'':`<label>头套<select id="hat-food">${choices[activeHead].map((i,j)=>`<option value="${j}" ${hats[activeHead].item===j?'selected':''}>${e(i.name)}</option>`).join('')}</select></label><label>大小<input id="hat-size" type="range" min="0.1" max="1.5" step="0.01" value="${hats[activeHead].size}"></label><label>旋转<input id="hat-angle" type="range" min="-180" max="180" value="${hats[activeHead].angle}"></label><button id="hat-show">${hats[activeHead].visible?'隐藏':'显示'}</button><button id="hat-reset">重置</button>${faces.length>2?faces.map((f,i)=>`<button data-face="${i}">人物 ${i+1}</button>`).join(''):''}`;
       if(activeHead<0)return;
-      for(const [id,key] of [['hat-food','item'],['hat-size','size'],['hat-angle','angle']])$('#'+id).oninput=event=>{touched=true;hats[activeHead][key]=Number(event.target.value);hats[activeHead].visible=true;drawCrop();};
-      $('#hat-show').onclick=()=>{touched=true;hats[activeHead].visible=!hats[activeHead].visible;hatOptions();drawCrop();};
-      $('#hat-reset').onclick=()=>{touched=true;Object.assign(hats[activeHead],faces[activeHead]||{x:activeHead?.68:.32,y:.35,size:.28,angle:0},{visible:true});hatOptions();drawCrop();};
-      container.querySelectorAll('[data-face]').forEach(b=>b.onclick=()=>{touched=true;Object.assign(hats[activeHead],faces[Number(b.dataset.face)],{visible:true});hatOptions();drawCrop();});
+      for(const [id,key] of [['hat-food','item'],['hat-size','size'],['hat-angle','angle']])$('#'+id).oninput=event=>{resetGesture();touched=true;hats[activeHead][key]=Number(event.target.value);hats[activeHead].visible=true;drawCrop();};
+      $('#hat-show').onclick=()=>{resetGesture();touched=true;hats[activeHead].visible=!hats[activeHead].visible;hatOptions();drawCrop();};
+      $('#hat-reset').onclick=()=>{resetGesture();touched=true;Object.assign(hats[activeHead],faces[activeHead]||{x:activeHead?.68:.32,y:.35,size:.28,angle:0},{visible:true});hatOptions();drawCrop();};
+      container.querySelectorAll('[data-face]').forEach(b=>b.onclick=()=>{resetGesture();touched=true;Object.assign(hats[activeHead],faces[Number(b.dataset.face)],{visible:true});hatOptions();drawCrop();});
     };
-    container.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{activeHead=Number(b.dataset.target);hatOptions();});
-    $('#swap-hats').onclick=()=>{touched=true;const a={...hats[0]},b={...hats[1]};Object.assign(hats[0],b,{item:a.item});Object.assign(hats[1],a,{item:b.item});hatOptions();drawCrop();};
+    container.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{resetGesture();activeHead=Number(b.dataset.target);hatOptions();});
+    $('#swap-hats').onclick=()=>{resetGesture();touched=true;const a={...hats[0]},b={...hats[1]};Object.assign(hats[0],b,{item:a.item});Object.assign(hats[1],a,{item:b.item});hatOptions();drawCrop();};
     $('#fill-photo').onclick=()=>{fit=!fit;zoom=1;offsetX=offsetY=0;crop();};
     $('#filter-photo').onclick=()=>{retro=!retro;$('#filter-photo').textContent=retro?'拍立得 ✓':'原图 ✓';drawCrop();};hatOptions();
     $('#zoom').oninput = event => { zoom = Number(event.target.value); clampOffset(); drawCrop(); };
@@ -123,6 +123,7 @@ export function createPhoto({ game, toast }) {
     $('#reselect').onclick = () => $('#gallery-input').click(); $('#generate').onclick = generate;
     const canvas = $('#crop');
     const pointers=new Map();let gesture;
+    function resetGesture(){pointers.clear();gesture=null;}
     const point=event=>{const r=canvas.getBoundingClientRect(),t=photoTransform(source.width,source.height,W,H,fit,zoom,offsetX,offsetY);return {x:((event.clientX-r.left)*W/r.width-t.x)/t.scale,y:((event.clientY-r.top)*H/r.height-t.y)/t.scale};};
     const rebase=()=>{gesture=pointers.size?{start:[...pointers.values()].map(p=>({...p})),moved:false,hat:activeHead>=0?{...hats[activeHead]}:null,ox:offsetX,oy:offsetY}:null;};
     canvas.onpointerdown=event=>{

@@ -22,4 +22,4 @@
 
 ## 报名状态
 
-2026-10-24 15:20（北京时间）已提交[官方报名 Issue #1238](https://github.com/M-China/mcd-developer-innovation-challenge/issues/1238)，提交正文与 SUBMISSION.md 一致。截至本次检查，尚未收到官方回执，不能据此声称报名成功或获奖。后续应核查该 Issue 的官方评论，不重复提交申请。
+2026-10-24 15:59（北京时间），官方账号 M-China-Official 明确回复“您的作品已成功参赛”。[官方成功回执](https://github.com/M-China/mcd-developer-innovation-challenge/issues/1238#issuecomment-6381726961)。报名已确认成功；参赛成功不等于获奖，排名可在官方项目的排行榜查看。

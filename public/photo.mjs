@@ -118,13 +118,13 @@ export function createPhoto({ game, toast }) {
     $('#swap-hats').onclick=()=>{touched=true;const a={...hats[0]},b={...hats[1]};Object.assign(hats[0],b,{item:a.item});Object.assign(hats[1],a,{item:b.item});hatOptions();drawCrop();};
     $('#fill-photo').onclick=()=>{fit=!fit;zoom=1;offsetX=offsetY=0;crop();};
     $('#filter-photo').onclick=()=>{retro=!retro;$('#filter-photo').textContent=retro?'拍立得 ✓':'原图 ✓';drawCrop();};hatOptions();
-    $('#zoom').oninput = event => { zoom = Number(event.target.value); drawCrop(); };
+    $('#zoom').oninput = event => { zoom = Number(event.target.value); clampOffset(); drawCrop(); };
     $('#fit').onclick = () => { zoom = 1; offsetX = 0; offsetY = 0; $('#zoom').value = 1; drawCrop(); };
     $('#reselect').onclick = () => $('#gallery-input').click(); $('#generate').onclick = generate;
     const canvas = $('#crop');
     canvas.onpointerdown = event => { if(drag||event.button!==0)return;touched=true;drag={x:event.clientX,y:event.clientY,pointer:event.pointerId,moved:false};canvas.setPointerCapture(event.pointerId); };
     canvas.onpointermove = event => { if(!drag||drag.pointer!==event.pointerId)return;if(!drag.moved&&Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<4)return;const rect=canvas.getBoundingClientRect();if(activeHead>=0){const t=photoTransform(source.width,source.height,W,H,fit,zoom,offsetX,offsetY);hats[activeHead].x+=(event.clientX-drag.x)*W/rect.width/(source.width*t.scale);hats[activeHead].y+=(event.clientY-drag.y)*H/rect.height/(source.height*t.scale);}else{offsetX+=(event.clientX-drag.x)*W/rect.width;offsetY+=(event.clientY-drag.y)*H/rect.height;}drag={x:event.clientX,y:event.clientY,pointer:event.pointerId,moved:true};clampOffset();drawCrop(); };
-    canvas.onpointerup = canvas.onpointercancel = canvas.onlostpointercapture = () => { drag = null; };
+    canvas.onpointerup = canvas.onpointercancel = canvas.onlostpointercapture = event => { if(drag?.pointer===event.pointerId)drag = null; };
     const nudge = key => { if(activeHead>=0){touched=true;hats[activeHead].x+=key==='left'?-.01:key==='right'?.01:0;hats[activeHead].y+=key==='up'?-.01:key==='down'?.01:0;drawCrop();return;} if (key === 'left') offsetX -= 20; if (key === 'right') offsetX += 20; if (key === 'up') offsetY -= 20; if (key === 'down') offsetY += 20; clampOffset(); drawCrop(); };
     document.querySelectorAll('[data-nudge]').forEach(b => b.onclick = () => nudge(b.dataset.nudge));
     canvas.onkeydown = event => { const key = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }[event.key]; if (key) { event.preventDefault(); nudge(key); } };

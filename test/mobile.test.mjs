@@ -50,5 +50,21 @@ test('headwear tap preserves position; dragging follows finger delta without sna
  ctx.canvas.onpointermove(ev(302,300));assert.equal(ctx.hats[0].x,.3);
  ctx.canvas.onpointermove(ev(320,310,2));assert.equal(ctx.hats[0].x,.3);
  ctx.canvas.onpointermove(ev(320,310));assert.ok(Math.abs(ctx.hats[0].x-(.3+40/940))<1e-10);assert.ok(Math.abs(ctx.hats[0].y-.42)<1e-10);
- ctx.canvas.onpointerup();assert.equal(ctx.drag,null);
+ ctx.canvas.onpointerup(ev(320,310,2));assert.notEqual(ctx.drag,null);
+ ctx.canvas.onpointerup(ev(320,310));assert.equal(ctx.drag,null);
+});
+
+test('headwear movement uses displayed-photo scale at phone widths and preserves rotation/size',async()=>{
+ const {readFile}=await import('node:fs/promises');const {runInNewContext}=await import('node:vm');
+ const text=await readFile(new URL('../public/photo.mjs',import.meta.url),'utf8');
+ const handlers=text.slice(text.indexOf('    canvas.onpointerdown ='),text.indexOf('    const nudge ='));
+ for(const [sw,sh] of [[1600,900],[900,1600]])for(const width of [320,375,390,430])for(const fit of [true,false])for(const zoom of [1,2,4])for(const angle of [-90,0,135]){
+  const ctx={canvas:{setPointerCapture(){},getBoundingClientRect:()=>({width,height:width*1000/940})},drag:null,touched:false,activeHead:0,hats:[{x:.3,y:.4,size:.28,angle}],source:{width:sw,height:sh},W:940,H:1000,fit,zoom,offsetX:100,offsetY:-100,photoTransform,clampOffset(){},drawCrop(){}};
+  runInNewContext(handlers,ctx);const ev=(x,y)=>({clientX:x,clientY:y,pointerId:1,button:0});
+  ctx.canvas.onpointerdown(ev(50,50));ctx.canvas.onpointermove(ev(70,80));
+  const t=photoTransform(sw,sh,940,1000,fit,zoom,100,-100),hat=ctx.hats[0];
+  assert.ok(Math.abs((hat.x-.3)*sw*t.scale*width/940-20)<1e-8);
+  assert.ok(Math.abs((hat.y-.4)*sh*t.scale*width/940-30)<1e-8);
+  assert.equal(hat.angle,angle);assert.equal(hat.size,.28);
+ }
 });

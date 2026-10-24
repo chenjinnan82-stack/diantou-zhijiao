@@ -20,3 +20,13 @@ test('photo crop cannot expose empty edges and headwear keeps a transparent face
  }
  for(const name of ['汉堡','薯条','可乐','麦乐鸡'])assert.match(headwearSVG(name),/<mask id="face">.*fill="black"/);
 });
+
+// Exercise the installed lost-capture handler: mobile implicit release precedes click.
+test('implicit touch release preserves taps; interrupted drags still cancel',async()=>{
+ const {readFile}=await import('node:fs/promises');const {runInNewContext}=await import('node:vm');
+ const source=await readFile(new URL('../public/catalog.mjs',import.meta.url),'utf8');
+ const statement=source.match(/root\.onlostpointercapture=\(\)=>\{[^\n]+/)[0];
+ const ctx={root:{},drag:null,cancel:()=>{ctx.cancelled++;},cancelled:0};
+ runInNewContext(statement,ctx);ctx.root.onlostpointercapture();assert.equal(ctx.cancelled,0);
+ ctx.drag={moved:true};ctx.root.onlostpointercapture();assert.equal(ctx.cancelled,1);
+});

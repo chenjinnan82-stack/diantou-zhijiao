@@ -166,7 +166,9 @@ export function mountCatalog(root,{snapshot,pieces,onChange,api,toast}) {
   };
   shelf.addEventListener('scroll',()=>{lastScroll=performance.now();if(touch)touch.blocked=true;},{passive:true});
   const cancel=()=>{if(touch)touch.blocked=true;if(drag?.moved){suppressClick=true;root.querySelector('.tray-feedback').textContent='拖动中断了，原来的餐品仍在。';}finish();};
-  root.onpointercancel=cancel;root.onlostpointercapture=cancel;
+  root.onpointercancel=cancel;
+  // Touch implicitly releases capture before click; that is not a cancelled tap.
+  root.onlostpointercapture=()=>{if(drag)cancel();};
   drawTray();for(const p of selected){const s=state(p.productId);if(!p.id&&s.variant){remember(s.variant);p.id=s.variant.id;}}commit();pump();
   return()=>{alive=false;observer.disconnect();finish();root.onclick=root.onchange=root.onkeydown=root.onpointerdown=root.onpointermove=root.onpointerup=root.onpointercancel=root.onlostpointercapture=null;};
 }

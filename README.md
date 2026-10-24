@@ -2,7 +2,7 @@
 
 **猜你点什么，就知道有多熟。**
 
-一部手机，两个人。把自己想吃的放进托盘，再替朋友猜一盘。交换手机，封好答案，一起揭晓——汉堡猜中了，饮料呢？最后拍张合影，把这顿饭做成一张大头贴。
+去麦当劳之前，先猜一猜对方会点什么。一部手机，两个人。把自己想吃的放进托盘，再替朋友猜一盘。交换手机，封好答案，一起揭晓——汉堡猜中了，饮料呢？最后拍张合影，把这顿饭做成一张大头贴。
 
 [开始体验](https://sanliang.online/lab/play/guess-my-order/) · [看看怎么玩](#怎么玩) · [本地运行](#本地运行)
 
@@ -17,11 +17,14 @@
 - **猜的是朋友的选择**：双方使用同一份餐单，逐项比较主餐、配餐和饮料；不编造默契分数或人格标签。
 - **留一张合影餐单**：本机自动放置保留真人表情的食物头套，可移动、缩放、旋转、交换和切换滤镜，再保存大头贴。
 
-![点头之交首页（开发预览）](docs/home-mobile.jpg)
+## 画面一览
 
-![套餐搭配（开发测试餐单）](docs/combo.jpg)
-
-![食物头套编辑（合成测试图）](docs/photo-editor.jpg)
+<table>
+<tr><th>一起开局</th><th>先搭套餐</th><th>戴上食物头套</th></tr>
+<tr><td><img src="docs/home-mobile.jpg" width="250" alt="手机首页"></td><td><img src="docs/combo.jpg" width="250" alt="套餐搭配"></td><td><img src="docs/photo-editor.jpg" width="250" alt="合成照片头套编辑"></td></tr>
+<tr><th colspan="2">留下这一餐</th><th>喊饭搭子来玩</th></tr>
+<tr><td colspan="2" align="center"><img src="docs/photo-card.png" width="290" alt="合成照片结果卡"></td><td><img src="docs/invite-mobile.jpg" width="250" alt="保存与邀请操作"></td></tr>
+</table>
 
 图中餐单仅用于开发演示，不代表真实可售商品或报价。体验站独立维护，开源版界面以本仓库为准。
 

@@ -220,7 +220,7 @@ export function createPhoto({ game, toast }) {
       } catch (err) { if (err.name !== 'AbortError') error('系统分享没能打开，可以直接保存图片。'); }
     };
     $('#copy-link').onclick = async () => {
-      try { const lines = ['一起吃过那么多次，敢不敢猜我今天点什么？', '嘴上说懂我，餐盘里见真章。来一局？', '你负责猜，我负责饿。来玩「点头之交」！', '友情小测验：我今天想吃的，你能猜中几样？', '先别问吃什么，先猜我会点什么。', '从点头之交，到懂我的胃，就差这一局。']; const next = (lastInvite + 1 + Math.floor(Math.random() * (lines.length - 1))) % lines.length; await navigator.clipboard.writeText(lines[next] + '\n点头之交 · 双人猜餐游戏\nhttps://sanliang.online/lab/play/guess-my-order/'); lastInvite = next; toast('邀请已复制，发给饭搭子吧！'); }
+      try { const lines = ['下次去麦当劳，先别告诉我你点什么。来「点头之交」，看我能不能猜中你的那一餐！', '一起吃过那么多次麦当劳，你知道我会选哪款汉堡吗？拿一部手机，咱俩互猜一盘。', '麦当劳饭搭子集合！你猜我的汉堡，我猜你的饮料，揭晓后再戴个食物头套合影。', '今天麦当劳吃什么？先各自搭一盘，再猜对方点什么。看看谁才是懂胃的朋友。', '约你吃麦当劳，顺便来场点餐小测验：我的主餐、配餐和饮料，你能猜中几样？', '去麦当劳之前先玩一局：别抄我的餐盘，猜猜我会怎么点！']; const next = (lastInvite + 1 + Math.floor(Math.random() * (lines.length - 1))) % lines.length; await navigator.clipboard.writeText(lines[next] + '\n点头之交 · 双人猜餐游戏\nhttps://sanliang.online/lab/play/guess-my-order/'); lastInvite = next; toast('邀请已复制，发给饭搭子吧！'); }
       catch { error('请复制：sanliang.online/lab/play/guess-my-order/'); }
     };
   }

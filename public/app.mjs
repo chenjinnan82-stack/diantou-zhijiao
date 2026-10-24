@@ -52,7 +52,7 @@ function render(focus = true) {
   if (focus) focusScreen();
 }
 function welcome() {
-  app.innerHTML = `<section class="welcome"><p class="eyebrow">双人点餐游戏</p><h1 class="game-title">点头<span class="title-mark">之交</span></h1><div class="cover-stage tray-cover" aria-hidden="true"><div class="cover-tray">${traySVG([{name:"汉堡"},{name:"薯条"},{name:"可乐"}],"","#E8C547")}<span>我想吃的</span></div><div class="cover-tray">${traySVG([{name:"麦满分"},{name:"冰淇淋"},{name:"咖啡"}],"","#70A58B")}<span>你猜的</span></div><span class="cover-star">✳</span><span class="cover-note">这一口，你懂我吗 ↙</span><span class="cover-question">?</span></div><p class="welcome-copy">猜你点什么，<br>就知道有多熟。</p><button class="button" id="start">一起玩 <span class="arrow" aria-hidden="true">↗</span></button><p class="welcome-meta">2 个人 · 1 部手机 · 3–5 分钟</p></section>`;
+  app.innerHTML = `<section class="welcome"><p class="eyebrow">双人点餐游戏</p><h1 class="game-title">点头<span class="title-mark">之交</span></h1><div class="cover-stage tray-cover" aria-hidden="true"><div class="cover-tray">${traySVG([{name:"汉堡"},{name:"薯条"},{name:"可乐"}],"","#E8C547")}<span>我想吃的</span></div><div class="cover-tray">${traySVG([{name:"麦满分"},{name:"冰淇淋"},{name:"咖啡"}],"","#70A58B")}<span>你猜的</span></div><span class="cover-star">✳</span></div><p class="welcome-copy">猜你点什么，<br>就知道有多熟。</p><button class="button" id="start">一起玩 <span class="arrow" aria-hidden="true">↗</span></button><p class="welcome-meta">2 个人 · 1 部手机 · 3–5 分钟</p></section>`;
   $('#start').onclick = () => { screen = 'setup'; render(); };
 }
 function setup() {

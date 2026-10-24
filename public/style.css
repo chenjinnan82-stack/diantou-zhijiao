@@ -35,7 +35,6 @@ body.in-game .site-foot{display:none}.combo-choices{display:grid;grid-template-c
 @media(max-width:699px){body.in-game .masthead{padding:4px 0}.catalog-selection .screen-head h1{font-size:23px}.catalog-selection .store-caption{margin:3px 0}.catalog-scroll{height:max(260px,calc(100dvh - 400px))}.catalog-editor{height:max(300px,calc(100dvh - 360px))}.catalog-builder .serving-tray{height:125px}.catalog-builder .tray-topline{height:28px;min-height:28px}.catalog-builder .tray-piece{width:76px;height:76px}.catalog-builder .bundle-piece{width:85px;height:85px}.catalog-builder .tray-feedback{min-height:18px}.catalog-selection .action-dock .button{min-height:44px;padding:9px}.catalog-cell .food-title{font-size:14px}.catalog-cell,.catalog-cell .food-tile{min-height:155px}}
 @media(max-height:560px){.catalog-scroll,.catalog-editor{height:320px}.catalog-builder .tray-table{position:static}}
 .head-controls{max-width:540px;margin:12px auto}.head-controls button{min-height:44px;padding:6px 12px;border:1px solid var(--ink);border-radius:5px;background:var(--white);color:var(--ink)}.head-controls .button-row{flex-wrap:wrap;margin:8px 0;gap:6px}#hat-options{display:flex;flex-wrap:wrap;gap:8px;align-items:center}#hat-options label{display:flex;gap:8px;align-items:center;font-size:13px}#hat-options select{max-width:220px;min-height:44px}#hat-options input{min-height:44px}.crop-wrap{max-width:430px}.crop-surface{width:min(100%,calc(55dvh * .94));height:auto;max-height:none;margin-inline:auto}.preview-actions>.button-row:first-child{position:sticky;bottom:0;background:var(--paper);padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:2}.preview-actions>.button-row{margin:8px 0}.preview-actions details{padding:8px 0}.preview-actions summary{min-height:44px;cursor:pointer}.photo-heading{padding:12px 0}.photo-heading h1{font-size:30px}
-.crop-surface{width:min(100%,calc(55dvh * .94));height:auto;max-height:none;margin:auto}
 .just-added{animation:tray-arrival 180ms ease-out}@keyframes tray-arrival{from{opacity:.2;scale:.7}to{opacity:1;scale:1}}@media(prefers-reduced-motion:reduce){.just-added{animation:none}}
 .head-controls button[aria-pressed=true]{background:var(--yellow);border:2px solid var(--ink)}section:has(#crop) .action-dock{position:static;padding:12px 0}.preview-actions{position:sticky;bottom:0;z-index:5;background:var(--paper);padding:6px 0 max(6px,env(safe-area-inset-bottom))}.preview-actions>.button-row:first-child{position:static}.preview-actions details{padding:0}.preview-actions summary{min-height:44px;text-align:center;list-style-position:inside}
 body.in-game .wordmark{visibility:hidden}.catalog-selection.configuring .action-dock{display:none}.combo-form>button[type=submit]{position:sticky;bottom:0;z-index:2}.catalog-builder .tray-feedback:empty{min-height:18px}
@@ -63,3 +62,37 @@ body.in-game .wordmark{visibility:hidden}.catalog-selection.configuring .action-
 #about{display:none}body.in-game .masthead{display:none}
 
 .welcome .game-title{font-size:clamp(56px,10vw,86px);letter-spacing:.02em;line-height:1.2}.welcome .game-title .title-mark{margin-left:.12em}
+
+/* Keep photo tools on the same measure as the photograph. */
+.head-controls{max-width:430px}.head-controls>.button-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.head-controls>.button-row:last-child{grid-template-columns:repeat(2,minmax(0,1fr))}.head-controls button{overflow-wrap:anywhere}.head-controls button[aria-pressed=true]{box-shadow:2px 2px 0 var(--ink)}
+#hat-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;padding:12px 0}#hat-options:empty{display:none}#hat-options>label{display:flex;min-width:0;gap:8px;white-space:nowrap}#hat-options>label:first-child{grid-column:1/-1}#hat-options select{flex:1;min-width:0;max-width:none;border:1px solid var(--ink);border-radius:4px;background:var(--white);padding:0 8px}#hat-options input{flex:1;width:0;min-width:0;accent-color:var(--ink)}#hat-options>button{background:transparent}
+.crop-controls{padding:8px 0 0;gap:8px}.crop-controls>label{font-size:14px}.crop-controls>input{min-width:60px}.crop-controls>.text-button{font-size:13px}.nudge-controls{gap:6px;margin-top:4px}.nudge-controls button{width:44px}
+.photo-heading{max-width:430px;margin:auto;text-align:left;padding:16px 0 12px}.preview-image{margin-bottom:16px}.preview-actions{max-width:440px}.preview-actions>.button-row{gap:10px}.preview-actions details{border-top:1px solid #25231f35;margin-top:4px}
+@media(max-width:430px){.head-controls{margin:10px auto}.head-controls button{padding:6px 8px;font-size:14px}.crop-wrap{padding:10px}.photo-heading h1{font-size:24px}.photo-choice .button-row{flex-direction:column}.site-foot{font-size:11px;gap:12px;align-items:baseline}.welcome-meta{margin-top:14px}.welcome-copy{margin:12px 0 18px}}
+
+/* A single title leads the cover; the two trays do the explaining. */
+body:not(.in-game) .masthead{display:none}
+body:not(.in-game) main{min-height:0}
+.welcome .game-title{white-space:nowrap}
+@media(max-width:649px){
+ .welcome{display:flex;flex-direction:column;align-items:center;padding:30px 0 8px}
+ .welcome .eyebrow{order:0;margin:0 0 14px;font-size:14px}
+ .welcome .game-title{order:1;font-size:clamp(52px,15vw,72px)}
+ .welcome-copy{order:2;font-size:17px;line-height:1.5;margin:16px 0 4px}
+ .welcome-copy br{display:none}
+ .welcome .tray-cover{order:3;width:100%;height:280px;max-width:340px;margin:24px auto 16px}
+ .tray-cover .cover-tray{width:72%;left:3%;top:14px}
+ .tray-cover .cover-tray:nth-child(2){right:2%;top:101px}
+ .tray-cover .cover-star{right:3%;top:26px;font-size:38px}
+ .welcome>.button{order:4;width:100%;max-width:340px;min-height:56px;font-size:23px}
+ .welcome-meta{order:5;margin:16px 0 0;font-size:12px}
+ body:not(.in-game) .site-foot{margin-top:24px;padding:18px 0;justify-content:center;flex-wrap:wrap}
+}
+@media(min-width:650px){
+ .welcome{padding:48px 0 24px;grid-template-areas:"eyebrow art" "title art" "copy art" "button art" "meta art";row-gap:0}
+ .welcome .game-title{font-size:70px}
+ .welcome .eyebrow{margin-bottom:18px}
+ .welcome .tray-cover{height:330px}
+ .welcome-meta{margin:18px 0 0;padding:0;text-align:left}
+ body:not(.in-game) .site-foot{margin-top:26px}
+}

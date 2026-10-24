@@ -106,7 +106,7 @@ export function createPhoto({ game, toast }) {
     const hatOptions=()=>{
       container.querySelectorAll('[data-target]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.target)===activeHead)));
       $('#crop').setAttribute('aria-label',activeHead<0?'照片取景，拖动或使用方向键移动':'移动'+game.names[activeHead]+'的头套，拖动或使用方向键');
-      $('#zoom').disabled=activeHead!==-1;
+      $('#zoom').disabled=activeHead!==-1;$('#zoom').closest('.crop-controls').hidden=activeHead!==-1;
       $('#hat-options').innerHTML=activeHead<0?'':`<label>头套<select id="hat-food">${choices[activeHead].map((i,j)=>`<option value="${j}" ${hats[activeHead].item===j?'selected':''}>${e(i.name)}</option>`).join('')}</select></label><label>大小<input id="hat-size" type="range" min="0.1" max="1.5" step="0.01" value="${hats[activeHead].size}"></label><label>旋转<input id="hat-angle" type="range" min="-180" max="180" value="${hats[activeHead].angle}"></label><button id="hat-show">${hats[activeHead].visible?'隐藏':'显示'}</button><button id="hat-reset">重置</button>${faces.length>2?faces.map((f,i)=>`<button data-face="${i}">人物 ${i+1}</button>`).join(''):''}`;
       if(activeHead<0)return;
       for(const [id,key] of [['hat-food','item'],['hat-size','size'],['hat-angle','angle']])$('#'+id).oninput=event=>{resetGesture();touched=true;hats[activeHead][key]=Number(event.target.value);hats[activeHead].visible=true;drawCrop();};

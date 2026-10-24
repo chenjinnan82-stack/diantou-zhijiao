@@ -30,3 +30,12 @@ test('implicit touch release preserves taps; interrupted drags still cancel',asy
  runInNewContext(statement,ctx);ctx.root.onlostpointercapture();assert.equal(ctx.cancelled,0);
  ctx.drag={moved:true};ctx.root.onlostpointercapture();assert.equal(ctx.cancelled,1);
 });
+
+test('cancelled combo loads cannot replace the next editor',async()=>{
+ const {readFile}=await import('node:fs/promises');const {runInNewContext}=await import('node:vm');
+ const source=await readFile(new URL('../public/catalog.mjs',import.meta.url),'utf8');
+ const guard=source.match(/if\(!alive\|\|editing!==request\)return;/)[0];
+ const first={key:null},next={key:null};
+ const run=(editing,request)=>runInNewContext(`(()=>{${guard}return 'render';})()`,{alive:true,editing,request});
+ assert.equal(run(next,first),undefined);assert.equal(run(null,first),undefined);assert.equal(run(next,next),'render');
+});

@@ -76,15 +76,15 @@ export function mountCatalog(root,{snapshot,pieces,onChange,api,toast}) {
     const p=key?selected.find(p=>p.key===key):{productId:newId,id:null};if(!p||editorBusy)return;
     if(!key&&selected.length>=MAX_PIECES){toast('托盘已有 6 份。');return;}
     const scroll=shelf.scrollTop;
-    editing={key,productId:p.productId,point,scroll};shelf.hidden=true;root.querySelector('.catalog-tabs').hidden=true;editor.hidden=false;
+    const request=editing={key,productId:p.productId,point,scroll};shelf.hidden=true;root.querySelector('.catalog-tabs').hidden=true;editor.hidden=false;
     editor.innerHTML='<p role="status">正在展开这份餐…</p><button type="button" class="text-button" data-cancel>返回餐单</button>';commit();
     try{
-      const s=await load(p.productId,true);if(!alive||editing?.key!==key)return;
+      const s=await load(p.productId,true);if(!alive||editing!==request)return;
       const current=variant(p.id)||s.variant;
       editing={key,productId:p.productId,point,scroll,detail:s.detail,originalId:p.id,draft:s.detail.rounds.map(r=>({roundId:r.id,ids:(current?.selections?.find(q=>q.roundId===r.id)?.choices||r.choices.filter(c=>c.defaultQuantity).map(c=>({id:c.id,quantity:c.defaultQuantity}))).flatMap(c=>Array(c.quantity).fill(c.id))}))};
       for(const r of s.detail.rounds){const d=editing.draft.find(q=>q.roundId===r.id);while(d.ids.length<r.min)d.ids.push('');}
       drawEditor();
-    }catch(err){if(alive&&editing?.key===key){editor.innerHTML=`<p class="error-note" role="alert">${e(err.message)}</p><button type="button" class="button secondary" data-editor-retry>重试</button><button type="button" class="text-button" data-cancel>返回餐单</button>`;}}
+    }catch(err){if(alive&&editing===request){editor.innerHTML=`<p class="error-note" role="alert">${e(err.message)}</p><button type="button" class="button secondary" data-editor-retry>重试</button><button type="button" class="text-button" data-cancel>返回餐单</button>`;}}
   }
   function drawEditor(){
     const d=editing.detail,p=selected.find(p=>p.key===editing.key)||{productId:editing.productId},v=variant(p?.id);
@@ -107,7 +107,7 @@ export function mountCatalog(root,{snapshot,pieces,onChange,api,toast}) {
       field.append(grid);
       if(round.choices.length>6){const more=document.createElement('button');more.type='button';more.className='text-button';more.textContent='更多选项';more.onclick=()=>{grid.querySelectorAll('[hidden]').forEach(n=>n.hidden=false);more.remove();};field.append(more);}
       const update=()=>{const draft=editing.draft.find(r=>r.roundId===round.id);for(const cell of grid.children){const id=cell.querySelector('[data-pick]').dataset.pick,count=draft.ids.filter(v=>v===id).length;cell.classList.toggle('selected',count>0);cell.querySelector('[data-pick]').setAttribute('aria-pressed',String(count>0));cell.querySelector('output').textContent=count;cell.querySelector('.choice-count').hidden=round.max===1;cell.querySelector('[data-minus]').disabled=!count;cell.querySelector('[data-plus]').disabled=count>=round.choices.find(c=>c.id===id).max||draft.ids.filter(Boolean).length>=round.max;}};
-      grid.onclick=event=>{event.stopPropagation();const b=event.target.closest('button');if(!b||editorBusy)return;const draft=editing.draft.find(r=>r.roundId===round.id),id=b.dataset.pick||b.dataset.plus||b.dataset.minus;let ids=draft.ids.filter(Boolean);if(b.dataset.minus){const at=ids.indexOf(id);if(at>=0)ids.splice(at,1);}else if(round.max===1)ids=[id];else if(ids.length<round.max&&ids.filter(v=>v===id).length<round.choices.find(c=>c.id===id).max)ids.push(id);draft.ids=ids;update();};update();
+      grid.onclick=event=>{event.stopPropagation();const b=event.target.closest('button');if(!b||editorBusy)return;const draft=editing.draft.find(r=>r.roundId===round.id),id=b.dataset.pick||b.dataset.plus||b.dataset.minus;let ids=draft.ids.filter(Boolean);if(b.dataset.minus){const at=ids.indexOf(id);if(at>=0)ids.splice(at,1);}else if(round.max===1)ids=[id];else if(ids.length<round.max&&ids.filter(v=>v===id).length<round.choices.find(c=>c.id===id).max)ids.push(id);else toast(`这一组最多选 ${round.max} 份，请先减去一份再换。`);draft.ids=ids;update();};update();
     }
 
   }
